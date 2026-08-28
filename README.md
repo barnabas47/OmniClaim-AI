@@ -14,7 +14,7 @@
 ## 🚀 1-Click Fast Launcher (Windows)
 
 Simply double-click **`START_OMNICLAIM.bat`** in the project folder!  
-It automatically starts both the Python Backend and Vite Frontend servers, and opens `http://localhost:5173` in your browser.
+It automatically starts both the Python Backend and Vite Frontend servers, and opens `http://localhost:3000` in your browser.
 
 ---
 
@@ -75,11 +75,12 @@ graph TD
 ## 📁 Repository Structure
 
 ```
-Agents for Humans Hackathon/
-├── START_OMNICLAIM.bat         # 1-Click Windows Batch Launcher Script
+OmniClaim AI/
+├── START_OMNICLAIM.bat         # 1-Click Windows Batch Launcher Script (Port 3000)
 ├── start_omniclaim.ps1         # 1-Click PowerShell Launcher Script
 ├── LICENSE                     # MIT License
 ├── README.md                   # Project documentation & pitch
+├── ANDROID/                    # 100% Native Android Java Mobile App
 ├── backend/
 │   ├── main.py                 # FastAPI REST API, Vision OCR & Telemetry endpoints
 │   ├── requirements.txt        # Backend python dependencies
@@ -90,74 +91,10 @@ Agents for Humans Hackathon/
 │   │   ├── bluff_disprover_agent.py  # METAR weather disprover agent
 │   │   ├── legal_rights_agent.py     # Geodesic distance & EU261 compensation agent
 │   │   └── claim_filer_agent.py      # Carrier form pre-filler & legal letter agent
-│   ├── tools/
-│   │   ├── receipt_vision_parser.py  # Custom @tool for Vision OCR document extraction
-│   │   ├── flight_telemetry.py       # Custom @tool for flight telemetry
-│   │   ├── metar_weather.py          # Custom @tool for METAR weather & airport logs
-│   │   ├── distance_matrix.py        # Custom @tool for Great-Circle math & EU261 calculation
-│   │   └── carrier_form_filler.py    # Custom @tool for pre-filling carrier forms
-│   └── tests/
-│       ├── test_agents.py            # Pytest suite for multi-agent workflows
-│       └── test_tools.py             # Pytest suite for Vision OCR, METAR bluff & legal math
-├── frontend/
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── src/
-│       ├── App.tsx                    # OmniClaim Interactive Control Center
-│       └── types/
-│           └── index.ts
-└── docs/
-    └── BUILDER_POST_TEMPLATE.md       # Pre-written article for builder.aws.com
+│   └── tools/
+│       ├── receipt_vision_parser.py  # Custom @tool for Vision OCR document extraction
+│       ├── flight_telemetry.py       # Custom @tool for flight telemetry
+│       ├── metar_weather.py          # Custom @tool for METAR weather & airport logs
+│       ├── distance_matrix.py        # Custom @tool for Great-Circle math & EU261 calculation
+│       └── carrier_form_filler.py    # Custom @tool for pre-filling carrier forms
 ```
-
----
-
-## ⚡ Manual Quickstart Guide
-
-### 1. Running Backend Unit Tests & Server
-```bash
-# Navigate to project root
-cd "Agents for Humans Hackathon"
-
-# Run automated test suite
-python -m pytest backend/tests
-
-# Start FastAPI server
-python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
-```
-
-### 2. Building & Running the Frontend
-```bash
-# Navigate to frontend directory
-cd frontend
-
-# Install node dependencies
-npm install
-
-# Build production bundle
-npm run build
-
-# Start dev server
-npm run dev
-```
-
----
-
-## 🧪 Verification & Test Results
-
-```bash
-============================= test session starts =============================
-platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0
-collected 8 items
-
-backend/tests/test_agents.py ..                                          [ 25%]
-backend/tests/test_tools.py ......                                       [100%]
-
-============================== 8 passed in 0.63s ==============================
-```
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
