@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Minimal Modern Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="16dp"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_plane"
+            android:layout_marginEnd="12dp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="OmniClaim AI"
+            android:textColor="@color/text_white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/card_bg_modern"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp">
+
+            <View
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/badge_bg"
+                android:backgroundTint="@color/emerald_400"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="System Active"
+                android:textColor="@color/emerald_400"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Material 3 Segmented Pill Switcher -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/card_bg_modern"
+        android:padding="6dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="12dp">
+
+        <Button
+            android:id="@+id/btnTabOcr"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Boarding Pass OCR"
+            android:textAllCaps="false"
+            android:textColor="@color/text_white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:drawableStart="@drawable/ic_scan"
+            android:drawablePadding="8dp"
+            android:paddingStart="14dp"
+            android:backgroundTint="@color/sky_500"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnTabInbox"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Claim Inbox"
+            android:textAllCaps="false"
+            android:textColor="@color/text_muted"
+            android:textSize="13sp"
+            android:drawableStart="@drawable/ic_inbox"
+            android:drawablePadding="8dp"
+            android:paddingStart="14dp"
+            android:backgroundTint="@color/bg_dark"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+    <!-- Content Container -->
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="20dp" />
+
+</LinearLayout>

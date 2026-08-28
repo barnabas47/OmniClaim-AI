@@ -1,0 +1,45 @@
+{
+  "agent_name": "OmniClaimFlightAdvocate",
+  "version": "1.0.0",
+  "description": "Autonomous Flight Delay & Passenger Rights Negotiator powered by Strands Agents SDK and Amazon Bedrock",
+  "track": "Everyday Agents",
+  "foundation_model": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+  "fallback_model": "us.amazon.nova-pro-v1:0",
+  "runtime": "python3.12",
+  "agentcore_config": {
+    "execution_mode": "BACKGROUND_AUTONOMOUS",
+    "idle_timeout_seconds": 300,
+    "max_iterations": 20,
+    "memory": {
+      "type": "SESSION_SUMMARY",
+      "max_history_turns": 20
+    },
+    "guardrails": {
+      "content_policy": "STRICT",
+      "pii_redaction": true,
+      "max_financial_action_limit_usd": 0.0
+    },
+    "telemetry": {
+      "opentelemetry_enabled": true,
+      "cloudwatch_log_group": "/aws/bedrock/agentcore/omniclaim-ai"
+    }
+  },
+  "tools": [
+    {
+      "name": "check_flight_status",
+      "description": "Queries real-time flight telemetry, departure/arrival timestamps, and delay durations."
+    },
+    {
+      "name": "evaluate_weather_bluff",
+      "description": "Fetches airport METAR weather logs and neighboring flight departures to disprove false extraordinary circumstance claims by airlines."
+    },
+    {
+      "name": "calculate_compensation_entitlement",
+      "description": "Calculates Great-Circle geodesic distance and determines EU261/UK261/US DOT cash compensation tiers."
+    },
+    {
+      "name": "generate_prefilled_claim_package",
+      "description": "Pre-fills official carrier claim forms (Lufthansa, Ryanair, WizzAir, etc.) and drafts formal legal demand letters."
+    }
+  ]
+}

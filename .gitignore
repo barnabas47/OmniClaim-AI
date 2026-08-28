@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Node modules & build outputs
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-electron/
+
+# Android Studio & Gradle build files
+.gradle/
+ANDROID/.gradle/
+ANDROID/app/build/
+ANDROID/build/
+ANDROID/local.properties
+.idea/
+ANDROID/.idea/
+*.apk
+
+# Log files
+*.log
