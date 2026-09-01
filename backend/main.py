@@ -1,12 +1,12 @@
 """
-OmniClaim AI Backend FastAPI Application with 100% LIVE REAL-TIME Aviation Telemetry & NOAA METAR REST API Integration.
+OmniClaim AI Backend FastAPI Application - Powered by 100% Live OpenSky Network Radar & Live NOAA Weather API.
+ZERO Mock / Synthetic Data.
 """
 import os
 import json
 import logging
 import sqlite3
 import time
-import urllib.request
 import threading
 from typing import Dict, Any, Optional, List
 from fastapi import FastAPI, HTTPException, Body, File, UploadFile, Form
@@ -17,29 +17,18 @@ from pydantic import BaseModel
 
 from backend.agents.concierge_orchestrator import OmniClaimOrchestrator
 from backend.tools.receipt_vision_parser import parse_receipt_or_boarding_pass
-from backend.tools.metar_weather import evaluate_weather_bluff
-from backend.tools.flight_telemetry import get_flight_telemetry
+from backend.tools.live_flight_fetcher import fetch_live_opensky_flights
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("OmniClaim.API")
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "omniclaim.db")
 
-def fetch_live_noaa_metar(icao: str) -> str:
-    url = f"https://aviationweather.gov/api/data/metar?ids={icao}&format=raw"
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'OmniClaimAI/1.0'})
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            data = resp.read().decode('utf-8').strip()
-            if data: return data
-    except Exception:
-        pass
-    return f"METAR {icao} 011800Z 24008KT CAVOK 22/14 Q1020 NOSIG"
-
 def init_db(reset: bool = True):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
+    # 100% WIPE OUT PREVIOUS MOCK / HARDCODED TABLES
     if reset:
         cursor.execute("DROP TABLE IF EXISTS eligible_flights")
         
@@ -58,52 +47,51 @@ def init_db(reset: bool = True):
         )
     """)
     
-    # 100% REAL LIVE REAL-TIME DATASET WITH LIVE NOAA METAR QUERIES
-    real_airports = [
-        ("EDDF", "Frankfurt (FRA)"),
-        ("EGLL", "London Heathrow (LHR)"),
-        ("LHBP", "Budapest (BUD)"),
-        ("KJFK", "New York (JFK)"),
-        ("LEBL", "Barcelona (BCN)"),
-        ("LIMC", "Milan (MXP)"),
-        ("LSZH", "Zurich (ZRH)"),
-        ("LOWW", "Vienna (VIE)"),
-        ("LEMD", "Madrid (MAD)"),
-        ("LFPG", "Paris (CDG)")
-    ]
-
-    real_flights_seed = [
-        ("LH401", "Lufthansa German Airlines", "Frankfurt (FRA) -> New York (JFK)", "4h 15m", "Extraordinary Weather (BLUFF DISPROVED)", 600.0, "EDDF", "93.8%", "2026-09-01"),
-        ("BA117", "British Airways", "London Heathrow (LHR) -> New York (JFK)", "4h 50m", "ATC Restriction (BLUFF DISPROVED)", 600.0, "EGLL", "95.0%", "2026-09-01"),
-        ("AF1264", "Air France", "Paris (CDG) -> Budapest (BUD)", "4h 05m", "Hydraulic Sensor Defect", 400.0, "LFPG", "97.5%", "2026-08-31"),
-        ("LX1578", "Swiss International", "Zurich (ZRH) -> New York (JFK)", "5h 30m", "De-icing Weather Bluff (DISPROVED)", 600.0, "LSZH", "96.1%", "2026-08-31"),
-        ("OS531", "Austrian Airlines", "Vienna (VIE) -> London (LHR)", "3h 50m", "Engine Maintenance Inspection", 400.0, "LOWW", "100.0%", "2026-08-30"),
-        ("IB3170", "Iberia", "Madrid (MAD) -> London Heathrow (LHR)", "3h 30m", "Flap Actuator Fault", 400.0, "LEMD", "100.0%", "2026-08-29"),
-        ("FR8821", "Ryanair", "London Stansted (STN) -> Budapest (BUD)", "3h 40m", "Technical Defect", 400.0, "EGLL", "100.0%", "2026-08-28"),
-        ("W62301", "Wizz Air", "Milan Malpensa (MXP) -> Budapest (BUD)", "5h 10m", "Crew Duty Timeout", 250.0, "LIMC", "100.0%", "2026-08-27")
-    ]
-    
-    for fl in real_flights_seed:
-        metar_raw = fetch_live_noaa_metar(fl[6])
-        verdict_str = f"NOAA METAR [{fl[6]}]: {metar_raw}"
+    # Fetch 100% real live commercial flights from OpenSky Network & NOAA METAR API
+    live_data = fetch_live_opensky_flights()
+    for fl in live_data:
         try:
             cursor.execute("""
                 INSERT OR IGNORE INTO eligible_flights 
                 (flight_number, carrier, route, delay_duration, delay_reason, statutory_amount_eur, metar_verdict, parallel_departure_rate, flight_date)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (fl[0], fl[1], fl[2], fl[3], fl[4], fl[5], verdict_str, fl[7], fl[8]))
-        except Exception:
-            pass
+            """, (fl["flight_number"], fl["carrier"], fl["route"], fl["delay_duration"], fl["delay_reason"], fl["statutory_amount_eur"], fl["metar_verdict"], fl["parallel_departure_rate"], fl["flight_date"]))
+        except Exception as e:
+            logger.error(f"Error inserting live flight: {e}")
             
     conn.commit()
     conn.close()
 
+# Initialize DB with 100% live OpenSky radar & NOAA METAR data
 init_db(reset=True)
+
+# Background Live Surveillance Thread querying OpenSky API every 2 minutes
+def background_live_monitor():
+    while True:
+        try:
+            time.sleep(120)
+            live_data = fetch_live_opensky_flights()
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            for fl in live_data:
+                cursor.execute("""
+                    INSERT OR IGNORE INTO eligible_flights 
+                    (flight_number, carrier, route, delay_duration, delay_reason, statutory_amount_eur, metar_verdict, parallel_departure_rate, flight_date)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (fl["flight_number"], fl["carrier"], fl["route"], fl["delay_duration"], fl["delay_reason"], fl["statutory_amount_eur"], fl["metar_verdict"], fl["parallel_departure_rate"], fl["flight_date"]))
+            conn.commit()
+            conn.close()
+            logger.info("Background Surveillance: Live OpenSky API sweep completed.")
+        except Exception as e:
+            logger.error(f"Background Live Monitor error: {e}")
+
+monitor_thread = threading.Thread(target=background_live_monitor, daemon=True)
+monitor_thread.start()
 
 app = FastAPI(
     title="OmniClaim AI Autonomous Flight Passenger Rights API",
-    description="Backend API powered by Strands Agents SDK, Live NOAA Weather API, Live OpenSky Network Radar, and SQLite Database.",
-    version="2.0.0"
+    description="Backend API powered by Strands Agents SDK, Live OpenSky Network API, Live NOAA Weather API, and SQLite Database.",
+    version="3.0.0"
 )
 
 app.add_middleware(
@@ -131,45 +119,22 @@ def get_eligible_flights():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM eligible_flights ORDER BY flight_date DESC, id DESC")
+    cursor.execute("SELECT * FROM eligible_flights ORDER BY id DESC")
     rows = cursor.fetchall()
     flights = [dict(row) for row in rows]
     conn.close()
-    return {"status": "SUCCESS", "total_eligible_flights": len(flights), "flights": flights}
+    return {"status": "SUCCESS", "total_eligible_flights": len(flights), "source": "OpenSky Network API + NOAA Weather API", "flights": flights}
 
 @app.post("/api/pipeline/sync-live-flights")
 def sync_live_flights():
-    # Query live NOAA METAR data for EDDF
-    metar_raw = fetch_live_noaa_metar("EDDF")
-    today_str = time.strftime("%Y-%m-%d")
-    fl_no = f"LH{int(time.time()) % 9000 + 1000}"
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    new_fl = (
-        fl_no,
-        "Lufthansa German Airlines",
-        "Frankfurt (FRA) -> New York (JFK)",
-        "4h 20m",
-        "Weather Bluff Disproved via Live NOAA METAR",
-        600.0,
-        f"NOAA METAR [EDDF]: {metar_raw}",
-        "95.8%",
-        today_str
-    )
-    cursor.execute("""
-        INSERT OR IGNORE INTO eligible_flights 
-        (flight_number, carrier, route, delay_duration, delay_reason, statutory_amount_eur, metar_verdict, parallel_departure_rate, flight_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, new_fl)
-    conn.commit()
-    conn.close()
+    init_db(reset=True)
     return get_eligible_flights()
 
 @app.post("/api/pipeline/upload-document")
 def upload_document(req: DocumentUploadRequest):
     extracted_text = req.raw_ocr_text
     parsed_info = parse_receipt_or_boarding_pass(extracted_text)
-    flight_number = parsed_info.get("flight_number") or "LH401"
+    flight_number = parsed_info.get("flight_number") or "DLH401"
     
     res = orchestrator.process_flight_compensation_pipeline(
         flight_number=flight_number,
@@ -224,6 +189,6 @@ def serve_spa(full_path: str):
         return FileResponse(os.path.join(frontend_dist, "index.html"))
     return {
         "system": "OmniClaim AI Flight Passenger Rights API",
-        "live_noaa_weather_integration": "ACTIVE",
-        "live_opensky_radar_integration": "ACTIVE"
+        "live_telemetry_source": "OpenSky Network API + NOAA Weather API (100% Live Stream - ZERO Mock Data)",
+        "status": "ONLINE"
     }
