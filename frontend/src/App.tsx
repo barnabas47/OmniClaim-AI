@@ -13,7 +13,7 @@ import {
   Clock,
   Upload,
   RefreshCcw,
-  Check,
+  ChevronDown,
   Send
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -38,6 +38,9 @@ export default function App() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  
+  // Dynamic page limit: show 6 flights initially
+  const [visibleLimit, setVisibleLimit] = useState(6);
 
   const [eligibleFlights, setEligibleFlights] = useState<EligibleFlight[]>([
     { id: 19, flight_number: "EW9782", carrier: "Eurowings", route: "Berlin (BER) ➔ Palma (PMI)", delay_duration: "3h 25m", delay_reason: "Eligible (Crew Scheduling Failure)", statutory_amount_eur: 400.0, metar_verdict: "Normal Conditions", parallel_departure_rate: "100.0%", flight_date: "2026-09-01" },
@@ -88,7 +91,7 @@ Out-of-pocket food and refreshment expenses incurred during the delay totaling �
 
 TOTAL PAYABLE DEMAND: €${total.toFixed(2)} EUR
 
-Please remit the statutory payment of €${total.toFixed(2)} within 14 calendar days to avoid formal referral to the National Enforcement Body and European Small Claims Procedure.
+Please remit statutory payment of €${total.toFixed(2)} within 14 calendar days.
 
 Sincerely,
 ${passenger}`;
@@ -99,7 +102,7 @@ ${passenger}`;
   );
 
   const fetchDatabaseFlights = () => {
-    fetch('http://127.0.0.1:8000/api/pipeline/eligible-flights')
+    fetch('/api/pipeline/eligible-flights')
       .then(res => res.json())
       .then(data => {
         if (data.status === "SUCCESS" && data.flights) {
@@ -116,7 +119,7 @@ ${passenger}`;
   const handleSyncLive = async () => {
     setIsSyncing(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/pipeline/sync-live-flights', { method: 'POST' });
+      const res = await fetch('/api/pipeline/sync-live-flights', { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         if (data.flights) setEligibleFlights(data.flights);
@@ -163,7 +166,7 @@ ${passenger}`;
     setSubmittedSuccess(true);
     confetti({ particleCount: 180, spread: 90, origin: { y: 0.5 } });
     try {
-      await fetch('http://127.0.0.1:8000/api/pipeline/approve-decision', {
+      await fetch('/api/pipeline/approve-decision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision_id: claimData.claimId, approval_action: "SUBMITTED_TO_CARRIER" })
@@ -177,6 +180,7 @@ ${passenger}`;
     fl.route.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const displayedFlights = filteredFlights.slice(0, visibleLimit);
   const totalValue = claimData.statutoryEur + claimData.receiptsEur;
 
   return (
@@ -208,7 +212,7 @@ ${passenger}`;
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#1E293B', padding: '6px 14px', borderRadius: '20px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981' }}></span>
-            <span style={{ fontSize: '12px', fontWeight: '600', color: '#10B981' }}>Live 24/7 Monitor Active</span>
+            <span style={{ fontSize: '12px', fontWeight: '600', color: '#10B981' }}>Auto 24/7 Monitor Active</span>
           </div>
         </div>
       </header>
@@ -280,9 +284,9 @@ ${passenger}`;
                 />
               </div>
 
-              {/* Cards Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-                {filteredFlights.map((fl) => (
+              {/* Clean Cards Grid - Dynamic 6-item page limit */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '24px' }}>
+                {displayedFlights.map((fl) => (
                   <div
                     key={fl.id}
                     style={{ backgroundColor: '#0F172A', padding: '24px', borderRadius: '20px', border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
@@ -318,6 +322,18 @@ ${passenger}`;
                   </div>
                 ))}
               </div>
+
+              {/* Dynamic Load More Button */}
+              {visibleLimit < filteredFlights.length && (
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                  <button
+                    onClick={() => setVisibleLimit(prev => prev + 6)}
+                    style={{ backgroundColor: '#1E293B', border: '1px solid #334155', color: '#38BDF8', padding: '14px 28px', borderRadius: '14px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <ChevronDown size={18} /> Show More Flights (Displaying {displayedFlights.length} of {filteredFlights.length})
+                  </button>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -423,7 +439,7 @@ ${passenger}`;
             </motion.div>
           )}
 
-          {/* TAB 3: UPLOAD / SCAN BOARDING PASS (WITH FILE UPLOAD BUTTON) */}
+          {/* TAB 3: UPLOAD / SCAN BOARDING PASS */}
           {activeTab === 'ocr' && (
             <motion.div
               key="ocr"
@@ -433,22 +449,21 @@ ${passenger}`;
               transition={{ duration: 0.2 }}
               style={{ maxWidth: '650px', margin: '0 auto' }}
             >
-              {/* File Upload Drop Area */}
-              <div style={{ backgroundColor: '#0F172A', borderRadius: '20px', padding: '32px', border: '2px dashed #0EA5E9', textAlign: 'center', marginBottom: '24px', position: 'relative' }}>
+              <div style={{ backgroundColor: '#0F172A', borderRadius: '20px', padding: '32px', border: '2px dashed #0EA5E9', textAlign: 'center', marginBottom: '24px' }}>
                 <Upload size={48} color="#0EA5E9" style={{ margin: '0 auto 12px auto' }} />
                 <h2 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 6px 0', color: '#FFFFFF' }}>Upload Boarding Pass or Receipt File</h2>
-                <p style={{ fontSize: '13px', color: '#94A3B8', margin: '0 0 16px 0' }}>Click below to choose an image (JPG, PNG) or PDF document from your PC</p>
+                <p style={{ fontSize: '13px', color: '#94A3B8', margin: '0 0 16px 0' }}>Choose an image (JPG, PNG) or PDF document from your PC</p>
 
                 <input
                   type="file"
                   accept="image/*,.pdf"
                   onChange={handleFileUpload}
                   style={{ display: 'none' }}
-                  id="pc-file-upload"
+                  id="pc-file-upload-tab"
                 />
 
                 <label
-                  htmlFor="pc-file-upload"
+                  htmlFor="pc-file-upload-tab"
                   style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#0EA5E9', color: '#FFFFFF', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}
                 >
                   📁 Select File from PC
@@ -462,16 +477,12 @@ ${passenger}`;
                 )}
               </div>
 
-              {/* Extracted Text */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ fontSize: '12px', color: '#94A3B8', fontWeight: '700', display: 'block', marginBottom: '6px' }}>Extracted Vision OCR Text</label>
-                <textarea
-                  value={ocrText}
-                  onChange={(e) => setOcrText(e.target.value)}
-                  rows={5}
-                  style={{ width: '100%', backgroundColor: '#0F172A', border: '1px solid #1E293B', borderRadius: '14px', padding: '16px', color: '#38BDF8', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
-                />
-              </div>
+              <textarea
+                value={ocrText}
+                onChange={(e) => setOcrText(e.target.value)}
+                rows={5}
+                style={{ width: '100%', backgroundColor: '#0F172A', border: '1px solid #1E293B', borderRadius: '14px', padding: '16px', color: '#38BDF8', fontFamily: 'monospace', fontSize: '13px', outline: 'none', boxSizing: 'border-box', marginBottom: '20px' }}
+              />
 
               <button
                 onClick={() => setActiveTab('claim')}
