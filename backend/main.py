@@ -1,6 +1,6 @@
 """
-OmniClaim AI Backend FastAPI Application - Powered by 100% Live OpenSky Network Radar & Live NOAA Weather API.
-ZERO Mock / Synthetic Data.
+OmniClaim AI Backend FastAPI Application - Powered by Multi-API Unified Telemetry Pipeline & Hourly Background Cron.
+Combines OpenSky Network Radar API + NOAA Aviation Weather API with Deduplication and Automatic SQLite UPSERT.
 """
 import os
 import json
@@ -17,18 +17,17 @@ from pydantic import BaseModel
 
 from backend.agents.concierge_orchestrator import OmniClaimOrchestrator
 from backend.tools.receipt_vision_parser import parse_receipt_or_boarding_pass
-from backend.tools.live_flight_fetcher import fetch_live_opensky_flights
+from backend.tools.unified_telemetry_aggregator import aggregate_and_deduplicate_live_telemetry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("OmniClaim.API")
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "omniclaim.db")
 
-def init_db(reset: bool = True):
+def init_db(reset: bool = False):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # 100% WIPE OUT PREVIOUS MOCK / HARDCODED TABLES
     if reset:
         cursor.execute("DROP TABLE IF EXISTS eligible_flights")
         
@@ -43,55 +42,55 @@ def init_db(reset: bool = True):
             statutory_amount_eur REAL,
             metar_verdict TEXT,
             parallel_departure_rate TEXT,
-            flight_date TEXT
+            flight_date TEXT,
+            last_api_sync_timestamp TEXT
         )
     """)
     
-    # Fetch 100% real live commercial flights from OpenSky Network & NOAA METAR API
-    live_data = fetch_live_opensky_flights()
-    for fl in live_data:
+    # Run multi-API aggregation & deduplicated UPSERT
+    live_flights = aggregate_and_deduplicate_live_telemetry()
+    for fl in live_flights:
         try:
             cursor.execute("""
-                INSERT OR IGNORE INTO eligible_flights 
-                (flight_number, carrier, route, delay_duration, delay_reason, statutory_amount_eur, metar_verdict, parallel_departure_rate, flight_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (fl["flight_number"], fl["carrier"], fl["route"], fl["delay_duration"], fl["delay_reason"], fl["statutory_amount_eur"], fl["metar_verdict"], fl["parallel_departure_rate"], fl["flight_date"]))
+                INSERT INTO eligible_flights 
+                (flight_number, carrier, route, delay_duration, delay_reason, statutory_amount_eur, metar_verdict, parallel_departure_rate, flight_date, last_api_sync_timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(flight_number) DO UPDATE SET
+                    delay_duration=excluded.delay_duration,
+                    metar_verdict=excluded.metar_verdict,
+                    last_api_sync_timestamp=excluded.last_api_sync_timestamp
+            """, (
+                fl["flight_number"], fl["carrier"], fl["route"], fl["delay_duration"], 
+                fl["delay_reason"], fl["statutory_amount_eur"], fl["metar_verdict"], 
+                fl["parallel_departure_rate"], fl["flight_date"], fl.get("last_api_sync_timestamp", time.strftime("%Y-%m-%d %H:%M:%S"))
+            ))
         except Exception as e:
-            logger.error(f"Error inserting live flight: {e}")
+            logger.error(f"UPSERT error for flight {fl.get('flight_number')}: {e}")
             
     conn.commit()
     conn.close()
 
-# Initialize DB with 100% live OpenSky radar & NOAA METAR data
+# Initialize database with clean multi-API data
 init_db(reset=True)
 
-# Background Live Surveillance Thread querying OpenSky API every 2 minutes
-def background_live_monitor():
+# 1-Hour Automated Background Cron Job (Runs every 3600 seconds)
+def hourly_multi_api_background_cron():
     while True:
         try:
-            time.sleep(120)
-            live_data = fetch_live_opensky_flights()
-            conn = sqlite3.connect(DB_PATH)
-            cursor = conn.cursor()
-            for fl in live_data:
-                cursor.execute("""
-                    INSERT OR IGNORE INTO eligible_flights 
-                    (flight_number, carrier, route, delay_duration, delay_reason, statutory_amount_eur, metar_verdict, parallel_departure_rate, flight_date)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (fl["flight_number"], fl["carrier"], fl["route"], fl["delay_duration"], fl["delay_reason"], fl["statutory_amount_eur"], fl["metar_verdict"], fl["parallel_departure_rate"], fl["flight_date"]))
-            conn.commit()
-            conn.close()
-            logger.info("Background Surveillance: Live OpenSky API sweep completed.")
+            time.sleep(3600)  # Wait 1 hour between automated API sweeps
+            logger.info("Hourly Background Cron: Executing Multi-API Telemetry Pipeline sweep...")
+            init_db(reset=False)  # Deduplicated UPSERT update
+            logger.info("Hourly Background Cron: SQLite database successfully synced with live multi-API stream.")
         except Exception as e:
-            logger.error(f"Background Live Monitor error: {e}")
+            logger.error(f"Hourly Background Cron error: {e}")
 
-monitor_thread = threading.Thread(target=background_live_monitor, daemon=True)
-monitor_thread.start()
+cron_thread = threading.Thread(target=hourly_multi_api_background_cron, daemon=True)
+cron_thread.start()
 
 app = FastAPI(
-    title="OmniClaim AI Autonomous Flight Passenger Rights API",
-    description="Backend API powered by Strands Agents SDK, Live OpenSky Network API, Live NOAA Weather API, and SQLite Database.",
-    version="3.0.0"
+    title="OmniClaim AI Multi-API Flight Telemetry Engine",
+    description="Backend API powered by Strands Agents SDK, OpenSky Radar API, NOAA Weather REST API, and Hourly Background Cron.",
+    version="4.0.0"
 )
 
 app.add_middleware(
@@ -123,11 +122,18 @@ def get_eligible_flights():
     rows = cursor.fetchall()
     flights = [dict(row) for row in rows]
     conn.close()
-    return {"status": "SUCCESS", "total_eligible_flights": len(flights), "source": "OpenSky Network API + NOAA Weather API", "flights": flights}
+    return {
+        "status": "SUCCESS", 
+        "total_eligible_flights": len(flights), 
+        "multi_api_pipeline": "OpenSky Network API + NOAA Aviation Weather REST API",
+        "deduplication_status": "DEDUPLICATED (UPSERT Enabled)",
+        "automated_cron_interval": "Hourly (Every 3600s)",
+        "flights": flights
+    }
 
 @app.post("/api/pipeline/sync-live-flights")
 def sync_live_flights():
-    init_db(reset=True)
+    init_db(reset=False)
     return get_eligible_flights()
 
 @app.post("/api/pipeline/upload-document")
@@ -140,7 +146,7 @@ def upload_document(req: DocumentUploadRequest):
         flight_number=flight_number,
         passenger_name=parsed_info.get("passenger_name") or "Alex Morgan",
         pnr_code=parsed_info.get("pnr_code") or "PNR-LH992",
-        flight_date="2026-09-01",
+        flight_date=time.strftime("%Y-%m-%d"),
         receipts_amount_eur=parsed_info.get("receipt_amount_eur") or 65.0
     )
     
@@ -188,7 +194,8 @@ def serve_spa(full_path: str):
     if os.path.exists(frontend_dist):
         return FileResponse(os.path.join(frontend_dist, "index.html"))
     return {
-        "system": "OmniClaim AI Flight Passenger Rights API",
-        "live_telemetry_source": "OpenSky Network API + NOAA Weather API (100% Live Stream - ZERO Mock Data)",
+        "system": "OmniClaim AI Multi-API Flight Passenger Rights Pipeline",
+        "live_sources": "OpenSky Network API + NOAA Aviation Weather REST API",
+        "automated_background_cron": "Active (Hourly Sync)",
         "status": "ONLINE"
     }
