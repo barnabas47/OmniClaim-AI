@@ -226,6 +226,17 @@ frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fronte
 if os.path.exists(frontend_dist):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
 
+@app.get("/favicon.svg")
+@app.get("/favicon.ico")
+def serve_favicon():
+    svg_dist = os.path.join(frontend_dist, "favicon.svg")
+    if os.path.exists(svg_dist):
+        return FileResponse(svg_dist, media_type="image/svg+xml")
+    svg_pub = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "public", "favicon.svg")
+    if os.path.exists(svg_pub):
+        return FileResponse(svg_pub, media_type="image/svg+xml")
+    raise HTTPException(status_code=404, detail="Favicon not found")
+
 @app.get("/{full_path:path}")
 def serve_spa(full_path: str):
     if full_path.startswith("api/"):
@@ -238,3 +249,4 @@ def serve_spa(full_path: str):
         "automated_background_cron": "Active (Hourly Sync)",
         "status": "ONLINE"
     }
+
