@@ -2,7 +2,7 @@
 
 [![AWS Hackathon](https://img.shields.io/badge/AWS_Hackathon-Agents_for_Humans-FF9900?logo=amazon-aws)](https://agentsforhumans.devpost.com)
 [![Live Demo](https://img.shields.io/badge/Live_Demo-omniclaim--ai.onrender.com-0EA5E9?logo=render)](https://omniclaim-ai.onrender.com)
-[![Strands SDK](https://img.shields.io/badge/Strands_SDK-0.1.0-sky500)](https://strandsagents.com)
+[![Strands SDK](https://img.shields.io/badge/Strands_SDK-1.54.0-sky500)](https://strandsagents.com)
 [![Bedrock AgentCore](https://img.shields.io/badge/AWS-Bedrock_AgentCore-indigo600)](https://aws.amazon.com/bedrock)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
 
@@ -36,9 +36,9 @@ Airlines rely on three main friction tactics to avoid paying passengers up to **
 **OmniClaim AI** is a background passenger rights advocate powered by the **Strands Agents SDK** and **Amazon Bedrock**.
 
 - **Set-and-Forget 24/7 Background Surveillance**: The user enters their flight callsign once (or uploads a boarding pass). The OmniClaim AI agent runs quietly in the background 24/7, auditing OpenSky ADS-B radar telemetry and NOAA METAR weather reports hourly.
-- **Empirical Weather & ATC Bluff Disprover**: When a 3+ hour delay occurs, OmniClaim AI queries live NOAA METAR logs and calculates parallel flight departure rates. If 96.8% of neighboring flights departed normally, the agent **empirically disproves both weather and ATC slot excuses** under European Court of Justice precedent (C-549/07 Wallentin-Hermann).
-- **Great-Circle Distance Math**: Calculates exact geodesic flight distances and maps legal compensation entitlements (€250, €400, or €600) plus out-of-pocket food/hotel expense reimbursements.
-- **Pre-Fills Carrier Claim Packages & Legal Letters**: Pre-fills official carrier claim forms (Lufthansa, Ryanair, WizzAir, etc.) and drafts formal legal demand notices.
+- **Empirical Weather & ATC Bluff Disprover**: When a 3+ hour delay occurs, OmniClaim AI queries live NOAA METAR logs and calculates parallel flight departure rates. If neighboring flights departed normally, the agent **empirically disproves both weather and ATC slot excuses** under European Court of Justice precedent (C-549/07 Wallentin-Hermann).
+- **Great-Circle Distance Math**: Calculates exact geodesic flight distances and maps legal compensation entitlements (€250, €400, or €600) plus out-of-pocket food/hotel expense reimbursements (*Duty of Care*).
+- **Pre-Fills Carrier Claim Packages & Legal Letters**: Pre-fills official carrier claim forms (Lufthansa, Ryanair, WizzAir, Air France, KLM, British Airways, Eurowings, etc.) and drafts formal legal demand notices.
 - **1-Click Human-in-the-Loop (HITL) Decision Card**: Surfaces a single 1-click decision card for passenger authorization when cash is ready to collect.
 
 ---
@@ -80,10 +80,12 @@ graph TD
 
 ## ⚙️ Key Technical Features
 
-1. **Strands Agents SDK Integration**: Uses `from strands import Agent, tool` with Amazon Bedrock (`us.anthropic.claude-3-7-sonnet-20250219-v1:0` & `us.amazon.nova-pro-v1:0`).
-2. **90-Day Retention & Strict Deduplication**: SQLite database maintains multi-date historical flight delay persistence for 3 months with `UNIQUE(flight_number, flight_date)` deduplication protection.
-3. **100% Live OpenSky Radar & NOAA Weather REST API Feed**: Real ADS-B telemetry and METAR weather reports.
-4. **100% Test Coverage**: Complete Pytest test suite (`pytest backend/tests`).
+1. **Strands Agents SDK Integration**: Built with `strands-agents` and Amazon Bedrock (`us.anthropic.claude-3-7-sonnet-20250219-v1:0` & `us.amazon.nova-pro-v1:0`).
+2. **SQLite Persistence & Strict UPSERT Deduplication**: Database maintains multi-date historical flight delay persistence for 3 months (`90-day retention`) with `UNIQUE(flight_number, flight_date)` deduplication protection.
+3. **100% Live OpenSky Radar & NOAA Weather REST API Feed**: Real ADS-B radar telemetry and METAR weather reports with cloud fail-safe fallback.
+4. **OCR Vision & Receipt Parsing**: Custom `@tool` extracting passenger names, flight numbers, PNR booking codes, and Duty of Care expense amounts.
+5. **Responsive Dual-Optimized UI**: Ultra-compact mobile view + multi-column desktop grid with Framer Motion animations.
+6. **100% Pytest Suite Coverage**: Fully verified backend test suite (`pytest backend/tests`).
 
 ---
 
@@ -91,8 +93,11 @@ graph TD
 
 ```
 OmniClaim AI/
-├── START_OMNICLAIM.bat         # 1-Click Windows Batch Launcher Script (Port 3000)
+├── START_OMNICLAIM.bat         # 1-Click Windows Batch Launcher Script
 ├── start_omniclaim.ps1         # 1-Click PowerShell Launcher Script
+├── build.sh                    # Automated Render cloud deployment build script
+├── render.yaml                 # Render cloud web service configuration
+├── package.json                # Root package configuration for build tools
 ├── LICENSE                     # MIT License
 ├── README.md                   # Project documentation & pitch
 ├── backend/
@@ -106,12 +111,23 @@ OmniClaim AI/
 │   │   ├── bluff_disprover_agent.py  # METAR weather disprover agent
 │   │   ├── legal_rights_agent.py     # Geodesic distance & EU261 compensation agent
 │   │   └── claim_filer_agent.py      # Carrier form pre-filler & legal letter agent
-│   └── tools/
-│       ├── receipt_vision_parser.py  # Custom @tool for Vision OCR document extraction
-│       ├── flight_telemetry.py       # Custom @tool for flight telemetry
-│       ├── metar_weather.py          # Custom @tool for METAR weather & airport logs
-│       ├── distance_matrix.py        # Custom @tool for Great-Circle math & EU261 calculation
-│       └── carrier_form_filler.py    # Custom @tool for pre-filling carrier forms
+│   ├── tools/
+│   │   ├── receipt_vision_parser.py  # Custom @tool for Vision OCR document extraction
+│   │   ├── unified_telemetry_aggregator.py # OpenSky Radar & NOAA METAR API aggregator
+│   │   ├── flight_telemetry.py       # Custom @tool for flight telemetry
+│   │   ├── metar_weather.py          # Custom @tool for METAR weather & airport logs
+│   │   ├── distance_matrix.py        # Custom @tool for Great-Circle math & EU261 calculation
+│   │   └── carrier_form_filler.py    # Custom @tool for pre-filling carrier forms
+│   └── tests/
+│       ├── test_agents.py            # Unit tests for Strands multi-agent engine
+│       └── test_tools.py             # Unit tests for custom tools & API aggregators
+└── frontend/
+    ├── public/
+    │   └── favicon.svg           # Custom glowing plane SVG favicon asset
+    ├── src/
+    │   ├── App.tsx               # Responsive dual-optimized React application
+    │   └── main.tsx              # React DOM entry point
+    └── dist/                     # Tracked production static build bundle
 ```
 
 ---
