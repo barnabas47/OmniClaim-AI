@@ -89,11 +89,18 @@ def init_db(reset: bool = False):
         except Exception as e:
             logger.error(f"UPSERT error for flight {fl.get('flight_number')}: {e}")
             
+    # 3. Retention policy: Keep records for 3 months (90 days), delete older entries
+    try:
+        cursor.execute("DELETE FROM eligible_flights WHERE flight_date < date('now', '-90 days')")
+    except Exception as e:
+        logger.warning(f"Retention prune warning: {e}")
+
     conn.commit()
     conn.close()
 
-# Initialize persistent SQLite database
+# Initialize persistent SQLite database with 90-day retention & deduplication
 init_db(reset=False)
+
 
 
 # 1-Hour Automated Background Cron Job (Runs every 3600 seconds)
