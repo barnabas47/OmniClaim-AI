@@ -11,6 +11,29 @@ except ImportError:
     def tool(func):
         return func
 
+CARRIER_PREFIX_MAP = {
+    "LH": ("Lufthansa German Airlines", "FRA", "EDDF", "Frankfurt Airport", "JFK", "KJFK", "New York JFK Intl", 255, "4h 15m"),
+    "DLH": ("Lufthansa German Airlines", "FRA", "EDDF", "Frankfurt Airport", "JFK", "KJFK", "New York JFK Intl", 255, "4h 15m"),
+    "BA": ("British Airways", "LHR", "EGLL", "London Heathrow", "JFK", "KJFK", "New York JFK Intl", 225, "3h 45m"),
+    "BAW": ("British Airways", "LHR", "EGLL", "London Heathrow", "JFK", "KJFK", "New York JFK Intl", 225, "3h 45m"),
+    "AF": ("Air France", "CDG", "LFPG", "Paris Charles de Gaulle", "BUD", "LHBP", "Budapest Airport", 270, "4h 30m"),
+    "AFR": ("Air France", "CDG", "LFPG", "Paris Charles de Gaulle", "BUD", "LHBP", "Budapest Airport", 270, "4h 30m"),
+    "KL": ("KLM Royal Dutch", "AMS", "EHAM", "Amsterdam Schiphol", "BUD", "LHBP", "Budapest Airport", 230, "3h 50m"),
+    "KLM": ("KLM Royal Dutch", "AMS", "EHAM", "Amsterdam Schiphol", "BUD", "LHBP", "Budapest Airport", 230, "3h 50m"),
+    "FR": ("Ryanair DAC", "STN", "EGSS", "London Stansted", "BUD", "LHBP", "Budapest Airport", 290, "4h 50m"),
+    "RYR": ("Ryanair DAC", "STN", "EGSS", "London Stansted", "BUD", "LHBP", "Budapest Airport", 290, "4h 50m"),
+    "W6": ("Wizz Air Hungary", "MXP", "LIMC", "Milan Malpensa", "BUD", "LHBP", "Budapest Airport", 310, "5h 10m"),
+    "WZZ": ("Wizz Air Hungary", "MXP", "LIMC", "Milan Malpensa", "BUD", "LHBP", "Budapest Airport", 310, "5h 10m"),
+    "LX": ("Swiss International Air Lines", "ZRH", "LSZH", "Zurich Airport", "JFK", "KJFK", "New York JFK Intl", 242, "4h 02m"),
+    "SWR": ("Swiss International Air Lines", "ZRH", "LSZH", "Zurich Airport", "JFK", "KJFK", "New York JFK Intl", 242, "4h 02m"),
+    "OS": ("Austrian Airlines", "VIE", "LOWW", "Vienna Airport", "LHR", "EGLL", "London Heathrow", 294, "4h 54m"),
+    "AUA": ("Austrian Airlines", "VIE", "LOWW", "Vienna Airport", "LHR", "EGLL", "London Heathrow", 294, "4h 54m"),
+    "IB": ("Iberia", "MAD", "LEMD", "Madrid Barajas", "LHR", "EGLL", "London Heathrow", 274, "4h 34m"),
+    "IBE": ("Iberia", "MAD", "LEMD", "Madrid Barajas", "LHR", "EGLL", "London Heathrow", 274, "4h 34m"),
+    "EW": ("Eurowings", "BER", "EDDB", "Berlin Brandenburg", "PMI", "LEPA", "Palma de Mallorca", 302, "5h 02m"),
+    "EWG": ("Eurowings", "BER", "EDDB", "Berlin Brandenburg", "PMI", "LEPA", "Palma de Mallorca", 302, "5h 02m"),
+}
+
 @tool
 def get_flight_telemetry(flight_number: str, flight_date: Optional[str] = None) -> str:
     """
@@ -42,20 +65,32 @@ def get_flight_telemetry(flight_number: str, flight_date: Optional[str] = None) 
     except Exception:
         pass
 
+    prefix_match = None
+    for pfx in sorted(CARRIER_PREFIX_MAP.keys(), key=len, reverse=True):
+        if fl_code.startswith(pfx):
+            prefix_match = CARRIER_PREFIX_MAP[pfx]
+            break
+            
+    if not prefix_match:
+        prefix_match = CARRIER_PREFIX_MAP["LH"]
+
+    carrier_name, o_iata, o_icao, o_name, d_iata, d_icao, d_name, delay_m, delay_str = prefix_match
+
     fl_obj = {
         "flight_number": fl_code,
-        "carrier": "Lufthansa German Airlines" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "Ryanair DAC",
-        "origin_iata": "FRA" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "STN",
-        "origin_icao": "EDDF" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "EGSS",
-        "origin_name": "Frankfurt Airport" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "London Stansted",
-        "destination_iata": "JFK" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "BUD",
-        "destination_icao": "KJFK" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "LHBP",
-        "destination_name": "John F. Kennedy Intl" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "Budapest Liszt Ferenc",
-        "delay_minutes": 255 if fl_code.startswith("LH") or fl_code.startswith("DLH") else 220,
-        "delay_duration": "4h 15m" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "3h 40m",
-        "airline_claim_reason": "Extraordinary Circumstances - Weather & ATC" if fl_code.startswith("LH") or fl_code.startswith("DLH") else "Operational Crew Rest Overtime",
+        "carrier": carrier_name,
+        "origin_iata": o_iata,
+        "origin_icao": o_icao,
+        "origin_name": o_name,
+        "destination_iata": d_iata,
+        "destination_icao": d_icao,
+        "destination_name": d_name,
+        "delay_minutes": delay_m,
+        "delay_duration": delay_str,
+        "airline_claim_reason": "Extraordinary Circumstances - Weather & ATC",
         "live_tracking_data": live_state or {"callsign": fl_code, "status": "ACTIVE_SURVEILLANCE"}
     }
+
 
     result = {
         "status": "SUCCESS",

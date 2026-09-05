@@ -10,6 +10,8 @@ except ImportError:
     def tool(func):
         return func
 
+from datetime import date
+
 @tool
 def generate_prefilled_claim_package(
     passenger_name: str,
@@ -23,19 +25,8 @@ def generate_prefilled_claim_package(
     """
     Pre-fills official airline claim forms and drafts formal, legally binding 
     compensation demand letters citing EU261 regulations and METAR weather evidence.
-
-    Args:
-        passenger_name: Full legal name of the passenger.
-        pnr_code: Passenger Name Record / Booking Reference code (e.g. 'PNR-89210').
-        flight_number: Flight IATA code (e.g. 'LH401').
-        carrier_name: Airline name (e.g. 'Lufthansa', 'Ryanair', 'Wizz Air').
-        compensation_amount_eur: Entitled compensation amount (€250, €400, or €600).
-        evidence_summary: Summary of METAR weather disproval evidence.
-        passenger_email: Passenger email address.
-
-    Returns:
-        JSON string containing the pre-filled form fields and the drafted formal legal demand letter.
     """
+    today_formatted = date.today().strftime("%B %d, %Y")
     form_title = f"{carrier_name} Passenger Rights & EU261 Compensation Claim Form"
 
     fields = {
@@ -52,7 +43,8 @@ def generate_prefilled_claim_package(
         "Human_Authorization": "REQUIRES_1CLICK_APPROVAL"
     }
 
-    legal_letter_body = f"""Date: August 22, 2026
+    legal_letter_body = f"""Date: {today_formatted}
+
 
 To the Customer Relations & Legal Claims Department of {carrier_name},
 

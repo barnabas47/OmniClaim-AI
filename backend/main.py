@@ -89,6 +89,17 @@ def init_db(reset: bool = False):
         except Exception as e:
             logger.error(f"UPSERT error for flight {fl.get('flight_number')}: {e}")
             
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            decision_id TEXT,
+            action TEXT,
+            carrier TEXT,
+            amount_eur REAL
+        )
+    """)
+
     # 3. Retention policy: Keep records for 3 months (90 days), delete older entries
     try:
         cursor.execute("DELETE FROM eligible_flights WHERE flight_date < date('now', '-90 days')")
@@ -101,39 +112,8 @@ def init_db(reset: bool = False):
 # Initialize persistent SQLite database with 90-day retention & deduplication
 init_db(reset=False)
 
-
-
-# 1-Hour Automated Background Cron Job (Runs every 3600 seconds)
-def hourly_multi_api_background_cron():
-    while True:
-        try:
-            time.sleep(3600)  # Wait 1 hour between automated API sweeps
-            logger.info("Hourly Background Cron: Executing Multi-API Telemetry Pipeline sweep...")
-            init_db(reset=False)  # Deduplicated UPSERT update
-            logger.info("Hourly Background Cron: SQLite database successfully synced with live multi-API stream.")
-        except Exception as e:
-            logger.error(f"Hourly Background Cron error: {e}")
-
-cron_thread = threading.Thread(target=hourly_multi_api_background_cron, daemon=True)
-cron_thread.start()
-
-app = FastAPI(
-    title="OmniClaim AI Multi-API Flight Telemetry Engine",
-    description="Backend API powered by Strands Agents SDK, OpenSky Radar API, NOAA Weather REST API, and Hourly Background Cron.",
-    version="4.0.0"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 orchestrator = OmniClaimOrchestrator()
 DECISION_STORE: Dict[str, Dict[str, Any]] = {}
-AUDIT_LOGS: list = []
 
 class DocumentUploadRequest(BaseModel):
     raw_ocr_text: str
@@ -169,15 +149,25 @@ def sync_live_flights():
 @app.post("/api/pipeline/upload-document")
 def upload_document(req: DocumentUploadRequest):
     extracted_text = req.raw_ocr_text
-    parsed_info = parse_receipt_or_boarding_pass(extracted_text)
-    flight_number = parsed_info.get("flight_number") or "DLH401"
+    parsed_raw = parse_receipt_or_boarding_pass(extracted_text)
     
+    try:
+        parsed_json = json.loads(parsed_raw)
+        parsed_info = parsed_json.get("vision_ocr_extracted", {})
+    except Exception:
+        parsed_info = {}
+
+    flight_number = parsed_info.get("flight_number") or "DLH401"
+    passenger_name = parsed_info.get("passenger_name") or "Alex Morgan"
+    pnr_code = parsed_info.get("pnr_code") or "PNR-LH992"
+    receipts_amount_eur = float(parsed_info.get("incurred_expense_receipt_eur") or 65.0)
+
     res = orchestrator.process_flight_compensation_pipeline(
         flight_number=flight_number,
-        passenger_name=parsed_info.get("passenger_name") or "Alex Morgan",
-        pnr_code=parsed_info.get("pnr_code") or "PNR-LH992",
+        passenger_name=passenger_name,
+        pnr_code=pnr_code,
         flight_date=time.strftime("%Y-%m-%d"),
-        receipts_amount_eur=parsed_info.get("receipt_amount_eur") or 65.0
+        receipts_amount_eur=receipts_amount_eur
     )
     
     decision_pkg = res["decision_package"]
@@ -192,25 +182,44 @@ def upload_document(req: DocumentUploadRequest):
 
 @app.post("/api/pipeline/approve-decision")
 def approve_decision(req: DecisionApprovalRequest):
-    if req.decision_id not in DECISION_STORE:
-        DECISION_STORE[req.decision_id] = {"decision_id": req.decision_id, "statutory_amount_eur": 600.0, "total_claim_eur": 665.0}
-        
-    pkg = DECISION_STORE[req.decision_id]
+    pkg = DECISION_STORE.get(req.decision_id, {"decision_id": req.decision_id, "statutory_amount_eur": 600.0, "total_claim_eur": 665.0})
     pkg["approval_state"] = req.approval_action
     pkg["approval_timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    DECISION_STORE[req.decision_id] = pkg
     
-    log_entry = {
-        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "decision_id": req.decision_id,
-        "action": req.approval_action
-    }
-    AUDIT_LOGS.append(log_entry)
+    # Store in persistent SQLite Audit Logs
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO audit_logs (timestamp, decision_id, action, carrier, amount_eur)
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        time.strftime("%Y-%m-%d %H:%M:%S"),
+        req.decision_id,
+        req.approval_action,
+        pkg.get("flight_info", {}).get("carrier", "Lufthansa"),
+        pkg.get("compensation", {}).get("amount_eur", 665.0)
+    ))
+    conn.commit()
+    conn.close()
     
     return {
         "status": "SUCCESS",
-        "message": f"Claim {req.decision_id} successfully submitted to carrier",
+        "message": f"Action '{req.approval_action}' recorded for claim {req.decision_id}",
         "decision_package": pkg
     }
+
+@app.get("/api/pipeline/audit-logs")
+def get_audit_logs():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM audit_logs ORDER BY id DESC")
+    rows = cursor.fetchall()
+    logs = [dict(row) for row in rows]
+    conn.close()
+    return {"status": "SUCCESS", "total_audit_records": len(logs), "audit_logs": logs}
+
 
 # Mount static files if frontend build exists
 frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")

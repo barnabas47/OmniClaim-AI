@@ -36,6 +36,21 @@ interface EligibleFlight {
   flight_date: string;
 }
 
+const CARRIER_EMAIL_MAP: Record<string, string> = {
+  "Lufthansa German Airlines": "customer.relations@lufthansa.com",
+  "British Airways": "passenger.rights@ba.com",
+  "Air France": "mail.claims@airfrance.fr",
+  "KLM Royal Dutch": "customer.care@klm.com",
+  "Ryanair": "disservice@ryanair.com",
+  "Ryanair DAC": "disservice@ryanair.com",
+  "Wizz Air": "customerrelations@wizzair.com",
+  "Wizz Air Hungary": "customerrelations@wizzair.com",
+  "Swiss International Air Lines": "legal.claims@swiss.com",
+  "Austrian Airlines": "passenger.rights@austrian.com",
+  "Iberia": "claims@iberia.es",
+  "Eurowings": "service@eurowings.com"
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'database' | 'claim' | 'ocr'>('database');
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +58,19 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+
+  const handleDismissClaim = async () => {
+    setSubmittedSuccess(false);
+    try {
+      await fetch('/api/pipeline/approve-decision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision_id: claimData.claimId, approval_action: "DISMISSED_BY_USER" })
+      });
+    } catch (e) {}
+    setActiveTab('database');
+  };
+
   const [visibleLimit, setVisibleLimit] = useState(6);
   const [selectedFlightModal, setSelectedFlightModal] = useState<EligibleFlight | null>(null);
 
@@ -617,11 +645,19 @@ ${passenger}`;
 
                   <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
                     <a
-                      href={`mailto:customer.relations@airline.com?subject=EU261 Statutory Demand Notice - Flight ${claimData.flightNumber}&body=${encodeURIComponent(legalNotice)}`}
-                      style={{ flex: '1 1 140px', padding: '14px', borderRadius: '12px', backgroundColor: '#E11D48', color: '#FFFFFF', textDecoration: 'none', fontWeight: '800', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px' }}
+                      href={`mailto:${CARRIER_EMAIL_MAP[claimData.carrier] || "customer.relations@airline.com"}?subject=EU261 Statutory Demand Notice - Flight ${claimData.flightNumber}&body=${encodeURIComponent(legalNotice)}`}
+                      style={{ flex: '1 1 120px', padding: '14px', borderRadius: '12px', backgroundColor: '#E11D48', color: '#FFFFFF', textDecoration: 'none', fontWeight: '800', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px' }}
                     >
                       <Mail size={16} /> Send via Email
                     </a>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDismissClaim}
+                      style={{ flex: '1 1 120px', padding: '14px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#F87171', fontWeight: '800', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    >
+                      <X size={16} /> Dismiss
+                    </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -635,6 +671,8 @@ ${passenger}`;
               </div>
             </motion.div>
           )}
+
+
 
           {/* TAB 3: UPLOAD / SCAN BOARDING PASS */}
           {activeTab === 'ocr' && (
