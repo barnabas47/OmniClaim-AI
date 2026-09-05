@@ -168,7 +168,6 @@ ${passenger}`;
     }
   };
 
-  // Real Backend POST Connection to /api/pipeline/upload-document
   const handleParseDocumentBackend = async () => {
     setIsParsing(true);
     try {
@@ -243,44 +242,44 @@ ${passenger}`;
   const totalValue = claimData.statutoryEur + claimData.receiptsEur;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#090D16', color: '#F9FAFB', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#090D16', color: '#F9FAFB', fontFamily: 'Inter, system-ui, -apple-system, sans-serif', boxSizing: 'border-box' }}>
       
-      {/* 100% Mobile & Desktop Responsive High-Contrast Header */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, backgroundColor: '#0F172A', borderBottom: '1px solid #1E293B', padding: '14px 20px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Plane size={22} color="#FFFFFF" />
+      {/* Precision Mobile Header with Controlled Margins */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 50, backgroundColor: '#0F172A', borderBottom: '1px solid #1E293B', padding: '12px 16px', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '10px', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Plane size={20} color="#FFFFFF" />
           </div>
           <div>
-            <h1 style={{ fontSize: '19px', fontWeight: '800', margin: 0, color: '#FFFFFF', letterSpacing: '-0.01em' }}>
-              OmniClaim <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '6px', backgroundColor: '#0284C7', color: '#FFFFFF', marginLeft: '4px', fontWeight: '700' }}>AI</span>
+            <h1 style={{ fontSize: '18px', fontWeight: '800', margin: 0, color: '#FFFFFF', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+              OmniClaim <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '5px', backgroundColor: '#0284C7', color: '#FFFFFF', marginLeft: '3px', fontWeight: '700' }}>AI</span>
             </h1>
-            <p style={{ fontSize: '11px', color: '#94A3B8', margin: 0 }}>Passenger Rights &amp; Live Weather Audit</p>
+            <p style={{ fontSize: '11px', color: '#94A3B8', margin: '2px 0 0 0', lineHeight: 1.1 }}>Passenger Rights &amp; Weather Audit</p>
           </div>
         </div>
 
-        {/* Live Stream Status & Sync Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        {/* Live Status Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <button
             onClick={handleSyncLive}
             disabled={isSyncing}
-            style={{ backgroundColor: '#1E293B', border: '1px solid #334155', color: '#38BDF8', padding: '8px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ backgroundColor: '#1E293B', border: '1px solid #334155', color: '#38BDF8', padding: '7px 11px', borderRadius: '8px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
           >
-            <RefreshCcw size={14} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Sync Live API"}
+            <RefreshCcw size={13} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Syncing..." : "Sync Live API"}
           </button>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '6px 12px', borderRadius: '20px' }}>
-            <Radio size={12} color="#10B981" className="animate-pulse" />
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#10B981' }}>Live OpenSky &amp; NOAA Stream</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '5px 10px', borderRadius: '16px' }}>
+            <Radio size={11} color="#10B981" className="animate-pulse" />
+            <span style={{ fontSize: '10px', fontWeight: '700', color: '#10B981', whiteSpace: 'nowrap' }}>Live OpenSky Stream</span>
           </div>
         </div>
       </header>
 
-      {/* Main Responsive Container */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '20px 16px' }}>
+      {/* Main Container with Mobile Padding */}
+      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '16px 12px', boxSizing: 'border-box' }}>
         
-        {/* Navigation Tabs - Responsive Scrollable Flex */}
-        <div style={{ display: 'flex', gap: '6px', backgroundColor: '#0F172A', padding: '6px', borderRadius: '16px', border: '1px solid #1E293B', marginBottom: '24px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        {/* Navigation Tabs - Horizontal Scrollable Pill Bar */}
+        <div style={{ display: 'flex', gap: '6px', backgroundColor: '#0F172A', padding: '5px', borderRadius: '14px', border: '1px solid #1E293B', marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', boxSizing: 'border-box' }}>
           {[
             { id: 'database', label: 'Eligible Flights', icon: Database, count: eligibleFlights.length },
             { id: 'claim', label: 'Claim Details', icon: FileText },
@@ -293,27 +292,26 @@ ${passenger}`;
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 style={{
-                  flex: '1 1 0px',
-                  minWidth: '110px',
-                  padding: '10px 14px',
-                  borderRadius: '12px',
+                  flex: '1 0 auto',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
                   border: 'none',
                   backgroundColor: isActive ? '#0EA5E9' : 'transparent',
                   color: isActive ? '#FFFFFF' : '#94A3B8',
-                  fontSize: '13px',
+                  fontSize: '12px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
+                  gap: '5px',
                   whiteSpace: 'nowrap'
                 }}
               >
-                <Icon size={16} color={isActive ? '#FFFFFF' : '#94A3B8'} />
+                <Icon size={15} color={isActive ? '#FFFFFF' : '#94A3B8'} />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
-                  <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '10px', backgroundColor: isActive ? 'rgba(255, 255, 255, 0.25)' : '#1E293B', color: '#FFFFFF' }}>
+                  <span style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '8px', backgroundColor: isActive ? 'rgba(255, 255, 255, 0.25)' : '#1E293B', color: '#FFFFFF' }}>
                     {tab.count}
                   </span>
                 )}
@@ -324,64 +322,69 @@ ${passenger}`;
 
         <AnimatePresence mode="wait">
           
-          {/* TAB 1: ELIGIBLE FLIGHTS DATABASE */}
+          {/* TAB 1: ELIGIBLE FLIGHTS DATABASE - RESPONSIVE CLEAN GRID */}
           {activeTab === 'database' && (
             <motion.div
               key="database"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
             >
-              {/* Filter Bar */}
-              <div style={{ position: 'relative', marginBottom: '20px' }}>
-                <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '14px', top: '14px' }} />
+              {/* Search Filter Bar */}
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <Search size={16} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search flights by callsign (DLH7K, BAW720), airline..."
-                  style={{ width: '100%', backgroundColor: '#0F172A', border: '1px solid #1E293B', borderRadius: '14px', padding: '12px 14px 12px 42px', color: '#FFFFFF', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+                  placeholder="Search callsign (DLH7K, BAW720), airline..."
+                  style={{ width: '100%', backgroundColor: '#0F172A', border: '1px solid #1E293B', borderRadius: '12px', padding: '10px 12px 10px 38px', color: '#FFFFFF', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
 
-              {/* Responsive Cards Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+              {/* Cards Grid: 1 Column on Mobile, 2 Columns on Desktop with Spacing */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px', marginBottom: '20px', boxSizing: 'border-box' }}>
                 {displayedFlights.map((fl) => (
                   <div
                     key={fl.id}
-                    style={{ backgroundColor: '#0F172A', padding: '20px', borderRadius: '18px', border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                    style={{ backgroundColor: '#0F172A', padding: '16px', borderRadius: '16px', border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box', overflow: 'hidden' }}
                   >
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ backgroundColor: '#0EA5E9', padding: '4px 10px', borderRadius: '8px', fontSize: '14px', fontWeight: '800', color: '#FFFFFF' }}>
+                      {/* Top Header Row: Callsign & Entitlement Badge */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '8px', flexWrap: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                          <span style={{ backgroundColor: '#0EA5E9', padding: '3px 8px', borderRadius: '6px', fontSize: '13px', fontWeight: '800', color: '#FFFFFF', whiteSpace: 'nowrap' }}>
                             {fl.flight_number}
                           </span>
-                          <span style={{ fontSize: '13px', fontWeight: '600', color: '#94A3B8' }}>{fl.carrier}</span>
+                          <span style={{ fontSize: '12px', fontWeight: '600', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fl.carrier}</span>
                         </div>
-                        <span style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '4px 10px', borderRadius: '8px', fontSize: '15px', fontWeight: '800', color: '#34D399' }}>
-                          €{fl.statutory_amount_eur.toFixed(2)}
+                        <span style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '3px 8px', borderRadius: '6px', fontSize: '14px', fontWeight: '800', color: '#34D399', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          €{fl.statutory_amount_eur.toFixed(0)}
                         </span>
                       </div>
 
-                      <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#FFFFFF', margin: '0 0 8px 0' }}>
+                      {/* Route Title with Word Wrap */}
+                      <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#FFFFFF', margin: '0 0 8px 0', lineHeight: 1.35, wordBreak: 'break-word' }}>
                         {fl.route}
                       </h3>
 
-                      <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '10px' }}>
-                        ⏱️ Delay: <strong style={{ color: '#FBBF24' }}>{fl.delay_duration}</strong> | Date: <span style={{ color: '#FFFFFF', fontWeight: '700' }}>{fl.flight_date}</span>
+                      {/* Delay & Date Info */}
+                      <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '10px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <span>⏱️ Delay: <strong style={{ color: '#FBBF24' }}>{fl.delay_duration}</strong></span>
+                        <span>Date: <strong style={{ color: '#FFFFFF' }}>{fl.flight_date}</strong></span>
                       </div>
 
-                      <div style={{ fontSize: '11px', color: '#38BDF8', fontFamily: 'monospace', backgroundColor: '#1E293B', padding: '8px', borderRadius: '8px', marginBottom: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {/* METAR Weather Observation Box */}
+                      <div style={{ fontSize: '10px', color: '#38BDF8', fontFamily: 'monospace', backgroundColor: '#1E293B', padding: '8px', borderRadius: '8px', marginBottom: '14px', lineHeight: 1.4, wordBreak: 'break-all', whiteSpace: 'normal', boxSizing: 'border-box' }}>
                         {fl.metar_verdict}
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleSelectFlight(fl)}
-                      style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#0EA5E9', color: '#FFFFFF', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      style={{ width: '100%', padding: '11px', borderRadius: '10px', border: 'none', backgroundColor: '#0EA5E9', color: '#FFFFFF', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxSizing: 'border-box' }}
                     >
-                      <Sparkles size={15} /> File Claim (€{fl.statutory_amount_eur.toFixed(0)})
+                      <Sparkles size={14} /> File Claim (€{fl.statutory_amount_eur.toFixed(0)})
                     </button>
                   </div>
                 ))}
@@ -389,106 +392,106 @@ ${passenger}`;
 
               {/* Dynamic Load More Button */}
               {visibleLimit < filteredFlights.length && (
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <div style={{ textAlign: 'center', marginTop: '12px' }}>
                   <button
                     onClick={() => setVisibleLimit(prev => prev + 6)}
-                    style={{ backgroundColor: '#1E293B', border: '1px solid #334155', color: '#38BDF8', padding: '12px 24px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    style={{ backgroundColor: '#1E293B', border: '1px solid #334155', color: '#38BDF8', padding: '11px 22px', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                   >
-                    <ChevronDown size={16} /> Show More Flights ({displayedFlights.length} of {filteredFlights.length})
+                    <ChevronDown size={15} /> Show More ({displayedFlights.length} of {filteredFlights.length})
                   </button>
                 </div>
               )}
             </motion.div>
           )}
 
-          {/* TAB 2: ACTIVE CLAIM WORKSPACE */}
+          {/* TAB 2: ACTIVE CLAIM WORKSPACE - STACKED RESPONSIVE LAYOUT */}
           {activeTab === 'claim' && (
             <motion.div
               key="claim"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
             >
               {submittedSuccess && (
-                <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', padding: '14px', borderRadius: '14px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <CheckCircle2 size={20} color="#10B981" />
+                <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10B981', padding: '12px', borderRadius: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle2 size={18} color="#10B981" flexShrink={0} />
                   <div>
-                    <h4 style={{ fontSize: '14px', fontWeight: '700', color: '#10B981', margin: 0 }}>Claim Successfully Recorded &amp; Submitted</h4>
-                    <p style={{ fontSize: '11px', color: '#D1D5DB', margin: 0 }}>Logged in central database with ID {claimData.claimId}.</p>
+                    <h4 style={{ fontSize: '13px', fontWeight: '700', color: '#10B981', margin: 0 }}>Claim Successfully Recorded &amp; Submitted</h4>
+                    <p style={{ fontSize: '11px', color: '#D1D5DB', margin: 0 }}>ID {claimData.claimId} logged in database.</p>
                   </div>
                 </div>
               )}
 
               {/* Summary Cards Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-                <div style={{ backgroundColor: '#0F172A', padding: '16px', borderRadius: '14px', border: '1px solid #1E293B' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ backgroundColor: '#0F172A', padding: '14px', borderRadius: '12px', border: '1px solid #1E293B', boxSizing: 'border-box' }}>
                   <span style={{ fontSize: '10px', fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase' }}>Selected Flight</span>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#FBBF24', margin: '2px 0 0 0' }}>{claimData.flightNumber}</h3>
-                  <span style={{ fontSize: '11px', color: '#94A3B8' }}>{claimData.carrier}</span>
+                  <h3 style={{ fontSize: '17px', fontWeight: '800', color: '#FBBF24', margin: '2px 0 0 0' }}>{claimData.flightNumber}</h3>
+                  <span style={{ fontSize: '10px', color: '#94A3B8', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{claimData.carrier}</span>
                 </div>
 
-                <div style={{ backgroundColor: '#0F172A', padding: '16px', borderRadius: '14px', border: '1px solid #1E293B' }}>
+                <div style={{ backgroundColor: '#0F172A', padding: '14px', borderRadius: '12px', border: '1px solid #1E293B', boxSizing: 'border-box' }}>
                   <span style={{ fontSize: '10px', fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase' }}>Entitlement</span>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#34D399', margin: '2px 0 0 0' }}>€{claimData.statutoryEur.toFixed(2)}</h3>
-                  <span style={{ fontSize: '11px', color: '#94A3B8' }}>EU261 Rights Verified</span>
+                  <h3 style={{ fontSize: '17px', fontWeight: '800', color: '#34D399', margin: '2px 0 0 0' }}>€{claimData.statutoryEur.toFixed(2)}</h3>
+                  <span style={{ fontSize: '10px', color: '#94A3B8' }}>EU261 Rights Verified</span>
                 </div>
 
-                <div style={{ backgroundColor: '#0F172A', padding: '16px', borderRadius: '14px', border: '1px solid #1E293B' }}>
+                <div style={{ backgroundColor: '#0F172A', padding: '14px', borderRadius: '12px', border: '1px solid #1E293B', boxSizing: 'border-box' }}>
                   <span style={{ fontSize: '10px', fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase' }}>Total Payout</span>
-                  <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#FFFFFF', margin: '2px 0 0 0' }}>€{totalValue.toFixed(2)}</h3>
-                  <span style={{ fontSize: '11px', color: '#38BDF8' }}>Includes €65 Receipt</span>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#FFFFFF', margin: '2px 0 0 0' }}>€{totalValue.toFixed(2)}</h3>
+                  <span style={{ fontSize: '10px', color: '#38BDF8' }}>Includes €65 Receipt</span>
                 </div>
               </div>
 
-              {/* Form & Demand Notice */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                <div style={{ backgroundColor: '#0F172A', padding: '20px', borderRadius: '18px', border: '1px solid #1E293B' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#FFFFFF', margin: '0 0 14px 0' }}>Passenger &amp; Flight Info</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+              {/* Form & Demand Letter - Stacked 1 Column on Mobile */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', boxSizing: 'border-box' }}>
+                <div style={{ backgroundColor: '#0F172A', padding: '16px', borderRadius: '16px', border: '1px solid #1E293B', boxSizing: 'border-box' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#FFFFFF', margin: '0 0 12px 0' }}>Passenger &amp; Flight Info</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px', boxSizing: 'border-box' }}>
                     <div>
-                      <label style={{ fontSize: '10px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>AIRLINE</label>
+                      <label style={{ fontSize: '10px', color: '#94A3B8', display: 'block', marginBottom: '3px' }}>AIRLINE</label>
                       <input value={claimData.carrier} onChange={(e) => setClaimData({...claimData, carrier: e.target.value})} style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', padding: '8px', color: '#38BDF8', fontSize: '12px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '10px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>FLIGHT CALLSIGN</label>
+                      <label style={{ fontSize: '10px', color: '#94A3B8', display: 'block', marginBottom: '3px' }}>FLIGHT CALLSIGN</label>
                       <input value={claimData.flightNumber} onChange={(e) => setClaimData({...claimData, flightNumber: e.target.value})} style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', padding: '8px', color: '#38BDF8', fontSize: '12px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '10px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>BOOKING PNR</label>
+                      <label style={{ fontSize: '10px', color: '#94A3B8', display: 'block', marginBottom: '3px' }}>BOOKING PNR</label>
                       <input value={claimData.pnr} onChange={(e) => setClaimData({...claimData, pnr: e.target.value})} style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', padding: '8px', color: '#38BDF8', fontSize: '12px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
-                      <label style={{ fontSize: '10px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>PASSENGER NAME</label>
+                      <label style={{ fontSize: '10px', color: '#94A3B8', display: 'block', marginBottom: '3px' }}>PASSENGER NAME</label>
                       <input value={claimData.passengerName} onChange={(e) => setClaimData({...claimData, passengerName: e.target.value})} style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', padding: '8px', color: '#38BDF8', fontSize: '12px', boxSizing: 'border-box' }} />
                     </div>
                   </div>
                 </div>
 
-                <div style={{ backgroundColor: '#0F172A', padding: '20px', borderRadius: '18px', border: '1px solid #1E293B', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ backgroundColor: '#0F172A', padding: '16px', borderRadius: '16px', border: '1px solid #1E293B', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
                   <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#FFFFFF', margin: '0 0 10px 0' }}>Formal Legal Demand Letter</h3>
                   <textarea
                     value={legalNotice}
                     onChange={(e) => setLegalNotice(e.target.value)}
                     rows={10}
-                    style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '10px', padding: '12px', color: '#F8FAFC', fontFamily: 'monospace', fontSize: '11px', lineHeight: 1.5, flex: 1, boxSizing: 'border-box', resize: 'none' }}
+                    style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '10px', padding: '10px', color: '#F8FAFC', fontFamily: 'monospace', fontSize: '11px', lineHeight: 1.45, flex: 1, boxSizing: 'border-box', resize: 'none' }}
                   />
 
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
                     <a
                       href={`mailto:customer.relations@airline.com?subject=EU261 Statutory Demand Notice - Flight ${claimData.flightNumber}&body=${encodeURIComponent(legalNotice)}`}
-                      style={{ flex: '1 1 140px', padding: '12px', borderRadius: '10px', backgroundColor: '#E11D48', color: '#FFFFFF', textDecoration: 'none', fontWeight: '700', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px' }}
+                      style={{ flex: '1 1 130px', padding: '11px', borderRadius: '8px', backgroundColor: '#E11D48', color: '#FFFFFF', textDecoration: 'none', fontWeight: '700', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '12px', boxSizing: 'border-box' }}
                     >
-                      <Mail size={15} /> Send via Email / Gmail
+                      <Mail size={14} /> Send via Email
                     </a>
                     <button
                       onClick={handleSubmitClaim}
-                      style={{ flex: '1 1 140px', padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#10B981', color: '#090D16', fontWeight: '800', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      style={{ flex: '1 1 130px', padding: '11px', borderRadius: '8px', border: 'none', backgroundColor: '#10B981', color: '#090D16', fontWeight: '800', fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', boxSizing: 'border-box' }}
                     >
-                      <Send size={15} /> Submit Claim to Carrier
+                      <Send size={14} /> Submit to Carrier
                     </button>
                   </div>
                 </div>
@@ -500,16 +503,16 @@ ${passenger}`;
           {activeTab === 'ocr' && (
             <motion.div
               key="ocr"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              style={{ maxWidth: '650px', margin: '0 auto' }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
+              style={{ maxWidth: '600px', margin: '0 auto', boxSizing: 'border-box' }}
             >
-              <div style={{ backgroundColor: '#0F172A', borderRadius: '18px', padding: '24px 16px', border: '2px dashed #0EA5E9', textAlign: 'center', marginBottom: '20px' }}>
-                <Upload size={40} color="#0EA5E9" style={{ margin: '0 auto 10px auto' }} />
-                <h2 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 6px 0', color: '#FFFFFF' }}>Upload Boarding Pass or Receipt File</h2>
-                <p style={{ fontSize: '12px', color: '#94A3B8', margin: '0 0 14px 0' }}>Choose an image (JPG, PNG) or PDF document</p>
+              <div style={{ backgroundColor: '#0F172A', borderRadius: '16px', padding: '20px 14px', border: '2px dashed #0EA5E9', textAlign: 'center', marginBottom: '16px', boxSizing: 'border-box' }}>
+                <Upload size={36} color="#0EA5E9" style={{ margin: '0 auto 8px auto' }} />
+                <h2 style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 4px 0', color: '#FFFFFF' }}>Upload Boarding Pass or Receipt File</h2>
+                <p style={{ fontSize: '11px', color: '#94A3B8', margin: '0 0 12px 0' }}>Choose an image (JPG, PNG) or PDF document</p>
 
                 <input
                   type="file"
@@ -521,15 +524,15 @@ ${passenger}`;
 
                 <label
                   htmlFor="mobile-file-upload-tab"
-                  style={{ display: 'inline-block', padding: '10px 20px', backgroundColor: '#0EA5E9', color: '#FFFFFF', borderRadius: '10px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}
+                  style={{ display: 'inline-block', padding: '9px 18px', backgroundColor: '#0EA5E9', color: '#FFFFFF', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '12px' }}
                 >
                   📁 Select File
                 </label>
 
                 {uploadedImage && (
-                  <div style={{ marginTop: '16px' }}>
+                  <div style={{ marginTop: '14px' }}>
                     <p style={{ fontSize: '11px', color: '#34D399', fontWeight: '700' }}>✓ File Uploaded Successfully!</p>
-                    <img src={uploadedImage} alt="Uploaded Pass" style={{ maxHeight: '150px', borderRadius: '10px', margin: '8px auto 0 auto', border: '1px solid #1E293B' }} />
+                    <img src={uploadedImage} alt="Uploaded Pass" style={{ maxHeight: '140px', borderRadius: '8px', margin: '6px auto 0 auto', border: '1px solid #1E293B' }} />
                   </div>
                 )}
               </div>
@@ -538,16 +541,16 @@ ${passenger}`;
                 value={ocrText}
                 onChange={(e) => setOcrText(e.target.value)}
                 rows={5}
-                style={{ width: '100%', backgroundColor: '#0F172A', border: '1px solid #1E293B', borderRadius: '12px', padding: '14px', color: '#38BDF8', fontFamily: 'monospace', fontSize: '12px', outline: 'none', boxSizing: 'border-box', marginBottom: '16px' }}
+                style={{ width: '100%', backgroundColor: '#0F172A', border: '1px solid #1E293B', borderRadius: '10px', padding: '12px', color: '#38BDF8', fontFamily: 'monospace', fontSize: '11px', outline: 'none', boxSizing: 'border-box', marginBottom: '14px' }}
               />
 
               <button
                 onClick={handleParseDocumentBackend}
                 disabled={isParsing}
-                style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', backgroundColor: '#0EA5E9', color: '#FFFFFF', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                style={{ width: '100%', padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#0EA5E9', color: '#FFFFFF', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxSizing: 'border-box' }}
               >
-                {isParsing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
-                {isParsing ? "Processing via Strands AI Agents..." : "Parse Document & Generate Claim"}
+                {isParsing ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />} 
+                {isParsing ? "Processing via Strands AI..." : "Parse Document & Generate Claim"}
               </button>
             </motion.div>
           )}
