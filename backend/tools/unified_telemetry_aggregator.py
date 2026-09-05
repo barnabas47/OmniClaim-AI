@@ -21,7 +21,19 @@ AIRLINE_CATALOG = {
     "AUA": ("Austrian Airlines", "Vienna (VIE)", "London Heathrow (LHR)", "LOWW"),
     "IBE": ("Iberia", "Madrid (MAD)", "London Heathrow (LHR)", "LEMD"),
     "EWG": ("Eurowings", "Berlin (BER)", "Palma (PMI)", "EDDB"),
-    "EJU": ("easyJet Europe", "Milan (MXP)", "London Gatwick (LGW)", "EGKK")
+    "EJU": ("easyJet Europe", "Milan (MXP)", "London Gatwick (LGW)", "EGKK"),
+    "UAE": ("Emirates", "Dubai (DXB)", "New York (JFK)", "OMDB"),
+    "QTR": ("Qatar Airways", "Doha (DOH)", "New York (JFK)", "OTHH"),
+    "THY": ("Turkish Airlines", "Istanbul (IST)", "Budapest (BUD)", "LTFM"),
+    "DAL": ("Delta Air Lines", "Atlanta (ATL)", "Paris CDG (CDG)", "KATL"),
+    "AAL": ("American Airlines", "Dallas (DFW)", "London Heathrow (LHR)", "KDFW"),
+    "UAL": ("United Airlines", "Chicago (ORD)", "Frankfurt (FRA)", "KORD"),
+    "LOT": ("LOT Polish Airlines", "Warsaw (WAW)", "Budapest (BUD)", "EPWA"),
+    "SAS": ("SAS Scandinavian Airlines", "Copenhagen (CPH)", "London Heathrow (LHR)", "EKCH"),
+    "FIN": ("Finnair", "Helsinki (HEL)", "London Heathrow (LHR)", "EFHK"),
+    "TAP": ("TAP Air Portugal", "Lisbon (LIS)", "London Heathrow (LHR)", "LPPT"),
+    "AEE": ("Aegean Airlines", "Athens (ATH)", "Budapest (BUD)", "LGAV"),
+    "VLG": ("Vueling Airlines", "Barcelona (BCN)", "London Gatwick (LGW)", "LEBL"),
 }
 
 def query_noaa_weather_api(icao: str) -> str:

@@ -48,7 +48,20 @@ const CARRIER_EMAIL_MAP: Record<string, string> = {
   "Swiss International Air Lines": "legal.claims@swiss.com",
   "Austrian Airlines": "passenger.rights@austrian.com",
   "Iberia": "claims@iberia.es",
-  "Eurowings": "service@eurowings.com"
+  "Eurowings": "service@eurowings.com",
+  "easyJet Europe": "customer.service@easyjet.com",
+  "Emirates": "customer.relations@emirates.com",
+  "Qatar Airways": "tell-us@qatarairways.com.qa",
+  "Turkish Airlines": "customer@thy.com",
+  "Delta Air Lines": "ticketrefunds@delta.com",
+  "American Airlines": "american.customercare@aa.com",
+  "United Airlines": "customercare@united.com",
+  "LOT Polish Airlines": "passenger.claims@lot.pl",
+  "SAS Scandinavian Airlines": "customer-relations@sas.se",
+  "Finnair": "claims@finnair.com",
+  "TAP Air Portugal": "customer@tap.pt",
+  "Aegean Airlines": "contact@aegeanair.com",
+  "Vueling Airlines": "contactus@vueling.com",
 };
 
 export default function App() {
