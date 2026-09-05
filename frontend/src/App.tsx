@@ -163,21 +163,26 @@ ${passenger}`;
         if (data.status === "SUCCESS" && data.flights) {
           setEligibleFlights(data.flights);
           if (data.flights.length > 0) {
-            const first = data.flights[0];
+            const lhFlight = data.flights.find((fl: EligibleFlight) => 
+              fl.carrier.toLowerCase().includes('lufthansa') || 
+              fl.flight_number.startsWith('LH') || 
+              fl.flight_number.startsWith('DLH')
+            );
+            const initialFlight = lhFlight || data.flights[0];
             setClaimData({
-              claimId: `CLM-2026-${first.flight_number}-992`,
-              carrier: first.carrier,
-              flightNumber: first.flight_number,
+              claimId: `CLM-2026-${initialFlight.flight_number}-992`,
+              carrier: initialFlight.carrier,
+              flightNumber: initialFlight.flight_number,
               pnr: "PNR-LH992",
               passengerName: "Alex Morgan",
               passengerEmail: "alex.morgan@example.com",
-              delayDuration: first.delay_duration,
-              statutoryEur: first.statutory_amount_eur,
+              delayDuration: initialFlight.delay_duration,
+              statutoryEur: initialFlight.statutory_amount_eur,
               receiptsEur: 65.0,
-              flightDate: first.flight_date,
-              route: first.route
+              flightDate: initialFlight.flight_date,
+              route: initialFlight.route
             });
-            setLegalNotice(generateLegalLetter(first.carrier, first.flight_number, "PNR-LH992", "Alex Morgan", first.statutory_amount_eur, 65.0, first.route, first.flight_date));
+            setLegalNotice(generateLegalLetter(initialFlight.carrier, initialFlight.flight_number, "PNR-LH992", "Alex Morgan", initialFlight.statutory_amount_eur, 65.0, initialFlight.route, initialFlight.flight_date));
           }
         }
       })
@@ -225,33 +230,15 @@ ${passenger}`;
     setSelectedFlightModal(fl);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setUploadedImage(imageUrl);
-      const fn = file.name.toLowerCase();
-      if (fn.includes('iberia') || fn.includes('ibe')) {
-        setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: IB3170\nPNR: PNR-IB992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
-      } else if (fn.includes('wizz') || fn.includes('w6')) {
-        setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: W62301\nPNR: PNR-W6992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
-      } else if (fn.includes('ryanair') || fn.includes('fr')) {
-        setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: FR8821\nPNR: PNR-FR992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
-      } else {
-        setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: LH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
-      }
-    }
-  };
-
-  const handleParseDocumentBackend = async () => {
+  const parseDocumentWithText = async (textToParse: string, filename?: string) => {
     setIsParsing(true);
     try {
       const response = await fetch('/api/pipeline/upload-document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          raw_ocr_text: ocrText,
-          filename: uploadedImage ? "uploaded_document.jpg" : "boarding_pass.txt"
+          raw_ocr_text: textToParse,
+          filename: filename || (uploadedImage ? "uploaded_document.jpg" : "boarding_pass.txt")
         })
       });
 
@@ -259,30 +246,39 @@ ${passenger}`;
         const resData = await response.json();
         const pkg = resData.decision_package;
         if (pkg) {
+          const updatedCarrier = pkg.flight_info?.carrier || "Lufthansa German Airlines";
+          const updatedFlight = pkg.flight_info?.flight_number || "LH401";
+          const updatedPnr = pkg.pnr_code || "PNR-LH992";
+          const updatedPassenger = pkg.passenger_name || "Alex Morgan";
+          const updatedStat = pkg.compensation?.statutory_amount_eur || 600.0;
+          const updatedRec = pkg.compensation?.duty_of_care_expenses_eur || 65.0;
+          const updatedRoute = pkg.flight_info?.route || "Frankfurt (FRA) ➔ New York (JFK)";
+          const updatedDate = "2026-09-01";
+
           setClaimData({
             claimId: pkg.decision_id || "CLM-2026-LH401-992",
-            carrier: pkg.flight_info?.carrier || "Lufthansa German Airlines",
-            flightNumber: pkg.flight_info?.flight_number || "LH401",
-            pnr: pkg.pnr_code || "PNR-LH992",
-            passengerName: pkg.passenger_name || "Alex Morgan",
+            carrier: updatedCarrier,
+            flightNumber: updatedFlight,
+            pnr: updatedPnr,
+            passengerName: updatedPassenger,
             passengerEmail: "alex.morgan@example.com",
             delayDuration: pkg.flight_info?.delay_duration || "4h 15m",
-            statutoryEur: pkg.compensation?.statutory_amount_eur || 600.0,
-            receiptsEur: pkg.compensation?.duty_of_care_expenses_eur || 65.0,
-            flightDate: "2026-09-01",
-            route: pkg.flight_info?.route || "Frankfurt (FRA) ➔ New York (JFK)"
+            statutoryEur: updatedStat,
+            receiptsEur: updatedRec,
+            flightDate: updatedDate,
+            route: updatedRoute
           });
 
           setLegalNotice(
             generateLegalLetter(
-              pkg.flight_info?.carrier || "Lufthansa German Airlines",
-              pkg.flight_info?.flight_number || "LH401",
-              pkg.pnr_code || "PNR-LH992",
-              pkg.passenger_name || "Alex Morgan",
-              pkg.compensation?.statutory_amount_eur || 600.0,
-              pkg.compensation?.duty_of_care_expenses_eur || 65.0,
-              pkg.flight_info?.route || "Frankfurt (FRA) ➔ New York (JFK)",
-              "2026-09-01"
+              updatedCarrier,
+              updatedFlight,
+              updatedPnr,
+              updatedPassenger,
+              updatedStat,
+              updatedRec,
+              updatedRoute,
+              updatedDate
             )
           );
         }
@@ -291,8 +287,35 @@ ${passenger}`;
       console.error("Backend OCR parse error:", e);
     } finally {
       setIsParsing(false);
-      setActiveTab('claim');
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setUploadedImage(imageUrl);
+      const fn = file.name.toLowerCase();
+      let extractedText = "";
+      if (fn.includes('iberia') || fn.includes('ibe')) {
+        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: IB3170\nPNR: PNR-IB992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
+      } else if (fn.includes('wizz') || fn.includes('w6')) {
+        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: W62301\nPNR: PNR-W6992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
+      } else if (fn.includes('ryanair') || fn.includes('fr')) {
+        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: FR8821\nPNR: PNR-FR992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
+      } else if (fn.includes('eurowings') || fn.includes('ew')) {
+        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: EW9782\nPNR: PNR-EW992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
+      } else {
+        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: LH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
+      }
+      setOcrText(extractedText);
+      parseDocumentWithText(extractedText, file.name);
+    }
+  };
+
+  const handleParseDocumentBackend = async () => {
+    await parseDocumentWithText(ocrText);
+    setActiveTab('claim');
   };
 
   const handleSubmitClaim = async () => {
