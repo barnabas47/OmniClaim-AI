@@ -67,6 +67,7 @@ const CARRIER_EMAIL_MAP: Record<string, string> = {
 export default function App() {
   const [activeTab, setActiveTab] = useState<'database' | 'claim' | 'ocr'>('database');
   const [searchQuery, setSearchQuery] = useState("");
+  const [lastSyncTime, setLastSyncTime] = useState<string>('');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
@@ -162,6 +163,7 @@ ${passenger}`;
       .then(data => {
         if (data.status === "SUCCESS" && data.flights) {
           setEligibleFlights(data.flights);
+          setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
           if (data.flights.length > 0) {
             const lhFlight = data.flights.find((fl: EligibleFlight) => 
               fl.carrier.toLowerCase().includes('lufthansa') || 
@@ -199,7 +201,10 @@ ${passenger}`;
       const res = await fetch('/api/pipeline/sync-live-flights', { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
-        if (data.flights) setEligibleFlights(data.flights);
+        if (data.flights) {
+          setEligibleFlights(data.flights);
+          setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        }
       }
     } catch (e) {
     } finally {
@@ -374,22 +379,47 @@ ${passenger}`;
           </div>
         </div>
 
-        {/* Live Telemetry Status Badges & Shimmer Sync Button */}
+        {/* Interactive Dynamic Live Telemetry & NOAA Sync Badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, whiteSpace: 'nowrap' }}>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={handleSyncLive}
             disabled={isSyncing}
-            style={{ background: 'linear-gradient(135deg, #0F172A, #1E293B)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38BDF8', padding: '7px 14px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)', whiteSpace: 'nowrap', flexShrink: 0 }}
+            title="Click to trigger live OpenSky Radar & NOAA METAR API sync"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: isSyncing 
+                ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(2, 132, 199, 0.15))' 
+                : 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1))',
+              border: isSyncing 
+                ? '1px solid rgba(14, 165, 233, 0.45)' 
+                : '1px solid rgba(16, 185, 129, 0.35)',
+              padding: '7px 16px',
+              borderRadius: '30px',
+              cursor: 'pointer',
+              boxShadow: isSyncing 
+                ? '0 0 20px rgba(14, 165, 233, 0.35)' 
+                : '0 0 14px rgba(16, 185, 129, 0.15)',
+              transition: 'all 0.25s ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0
+            }}
           >
-            <RefreshCcw size={13} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Scanning..." : "Sync Telemetry"}
+            {isSyncing ? (
+              <Loader2 size={13} color="#38BDF8" className="animate-spin" />
+            ) : (
+              <Radio size={13} color="#10B981" className="animate-pulse" />
+            )}
+            <span style={{ fontSize: '11px', fontWeight: '800', color: isSyncing ? '#38BDF8' : '#10B981', letterSpacing: '0.02em' }}>
+              {isSyncing 
+                ? "Syncing OpenSky & NOAA..." 
+                : `100% Live OpenSky & NOAA ${eligibleFlights.length > 0 ? `(${eligibleFlights.length} Flights ${lastSyncTime ? `• ${lastSyncTime}` : ''})` : 'Active'}`}
+            </span>
+            <RefreshCcw size={11} color={isSyncing ? '#38BDF8' : '#10B981'} className={isSyncing ? "animate-spin" : ""} style={{ opacity: 0.8 }} />
           </motion.button>
-          
-          <div className="hidden md:inline-flex" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '6px 14px', borderRadius: '30px', flexShrink: 0, whiteSpace: 'nowrap' }}>
-            <Radio size={12} color="#10B981" className="animate-pulse" />
-            <span style={{ fontSize: '11px', fontWeight: '800', color: '#10B981', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>100% Live OpenSky &amp; NOAA</span>
-          </div>
         </div>
       </header>
 
