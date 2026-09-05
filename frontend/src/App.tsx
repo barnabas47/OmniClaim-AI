@@ -308,9 +308,15 @@ ${passenger}`;
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(14, 165, 233, 0.12)', border: '1px solid rgba(14, 165, 233, 0.3)', padding: '4px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: '800', color: '#38BDF8', marginBottom: '12px', boxShadow: '0 0 15px rgba(14, 165, 233, 0.2)' }}>
-            <Zap size={13} color="#38BDF8" /> Instant EU261 Statutory Compensation Engine
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '12px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(14, 165, 233, 0.12)', border: '1px solid rgba(14, 165, 233, 0.3)', padding: '4px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: '800', color: '#38BDF8', boxShadow: '0 0 15px rgba(14, 165, 233, 0.2)' }}>
+              <Zap size={13} color="#38BDF8" /> Instant EU261 Statutory Compensation Engine
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: '800', color: '#34D399', boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)' }}>
+              <Radio size={12} color="#34D399" className="animate-pulse" /> Set-and-Forget Flight Guardian Active (24/7 Quiet Audit)
+            </div>
           </div>
+
 
           <h2 style={{ fontSize: '26px', fontWeight: '900', margin: '0 0 8px 0', letterSpacing: '-0.03em', color: '#FFFFFF', lineHeight: 1.2 }} className="sm:text-4xl md:text-5xl">
             Claim What Is <span style={{ background: 'linear-gradient(135deg, #38BDF8 0%, #818CF8 50%, #C084FC 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent', display: 'inline-block' }}>Rightfully Yours.</span>
