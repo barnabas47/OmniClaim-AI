@@ -1,0 +1,9 @@
+{
+  "name": "omniclaim-ai",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pip install -r backend/requirements.txt && cd frontend && npm install && npm run build",
+    "start": "python -m uvicorn backend.main:app --host 0.0.0.0 --port 10000"
+  }
+}
