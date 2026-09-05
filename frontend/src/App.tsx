@@ -292,44 +292,44 @@ ${passenger}`;
       </header>
 
       {/* Hero Header Section */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '36px 20px 20px 20px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '36px 20px 24px 20px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(14, 165, 233, 0.1)', border: '1px solid rgba(14, 165, 233, 0.25)', padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', color: '#38BDF8', marginBottom: '14px' }}>
-            <Zap size={14} /> Instant EU261 Statutory Compensation Engine
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(14, 165, 233, 0.12)', border: '1px solid rgba(14, 165, 233, 0.3)', padding: '6px 18px', borderRadius: '20px', fontSize: '12px', fontWeight: '800', color: '#38BDF8', marginBottom: '16px', boxShadow: '0 0 15px rgba(14, 165, 233, 0.2)' }}>
+            <Zap size={14} color="#38BDF8" /> Instant EU261 Statutory Compensation Engine
           </div>
 
-          <h2 style={{ fontSize: '38px', fontWeight: '900', margin: '0 0 10px 0', letterSpacing: '-0.03em', background: 'linear-gradient(135deg, #FFFFFF 30%, #94A3B8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Claim What Is Rightfully Yours.
+          <h2 style={{ fontSize: '42px', fontWeight: '900', margin: '0 0 14px 0', letterSpacing: '-0.03em', color: '#FFFFFF', lineHeight: 1.15 }}>
+            Claim What Is <span style={{ background: 'linear-gradient(135deg, #38BDF8 0%, #818CF8 50%, #C084FC 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent', color: 'transparent', display: 'inline-block' }}>Rightfully Yours.</span>
           </h2>
-          <p style={{ fontSize: '14px', color: '#94A3B8', maxWidth: '640px', margin: '0 auto 28px auto', lineHeight: 1.6 }}>
+          <p style={{ fontSize: '15px', color: '#CBD5E1', maxWidth: '680px', margin: '0 auto 32px auto', lineHeight: 1.6, fontWeight: '500' }}>
             Our autonomous AI agent audits real-time global flight radar telemetry and empirically disproves airline weather excuses using official NOAA METAR logs.
           </p>
 
           {/* Floating Metric Badges */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
-            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ backgroundColor: 'rgba(14, 165, 233, 0.2)', padding: '8px', borderRadius: '10px' }}><Plane size={18} color="#0EA5E9" /></div>
-              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '16px', fontWeight: '800', color: '#FFFFFF' }}>OpenSky Radar</div><div style={{ fontSize: '11px', color: '#94A3B8' }}>Global Live Telemetry</div></div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '28px' }}>
+            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(56, 189, 248, 0.25)', padding: '14px 22px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
+              <div style={{ backgroundColor: 'rgba(14, 165, 233, 0.2)', padding: '10px', borderRadius: '12px', display: 'flex' }}><Plane size={20} color="#38BDF8" /></div>
+              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '15px', fontWeight: '800', color: '#FFFFFF' }}>OpenSky Radar</div><div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: '600' }}>Global Live Telemetry</div></div>
             </div>
 
-            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', padding: '8px', borderRadius: '10px' }}><CloudSun size={18} color="#10B981" /></div>
-              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '16px', fontWeight: '800', color: '#FFFFFF' }}>NOAA Weather</div><div style={{ fontSize: '11px', color: '#94A3B8' }}>METAR Bluff Disprover</div></div>
+            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '14px 22px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
+              <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', padding: '10px', borderRadius: '12px', display: 'flex' }}><CloudSun size={20} color="#34D399" /></div>
+              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '15px', fontWeight: '800', color: '#FFFFFF' }}>NOAA Weather</div><div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: '600' }}>METAR Bluff Disprover</div></div>
             </div>
 
-            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)', padding: '8px', borderRadius: '10px' }}><Sparkles size={18} color="#FBBF24" /></div>
-              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '16px', fontWeight: '800', color: '#FFFFFF' }}>€250 - €600</div><div style={{ fontSize: '11px', color: '#94A3B8' }}>Statutory Rights / PAX</div></div>
+            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(251, 191, 36, 0.25)', padding: '14px 22px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
+              <div style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)', padding: '10px', borderRadius: '12px', display: 'flex' }}><Sparkles size={20} color="#FBBF24" /></div>
+              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '15px', fontWeight: '800', color: '#FFFFFF' }}>€250 - €600</div><div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: '600' }}>Statutory Rights / PAX</div></div>
             </div>
           </div>
         </motion.div>
 
         {/* Animated Sliding Tab Bar (shadcn/ui style) */}
-        <div style={{ display: 'inline-flex', gap: '6px', backgroundColor: 'rgba(15, 23, 42, 0.8)', padding: '6px', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.1)', position: 'relative', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div style={{ display: 'inline-flex', gap: '6px', backgroundColor: 'rgba(15, 23, 42, 0.9)', padding: '6px', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.12)', position: 'relative', flexWrap: 'wrap', justifyContent: 'center', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
           {[
             { id: 'database', label: 'Eligible Delayed Flights', icon: Database, count: eligibleFlights.length },
             { id: 'claim', label: 'Active Claim & Demand Notice', icon: FileText },
@@ -343,11 +343,11 @@ ${passenger}`;
                 onClick={() => setActiveTab(tab.id as any)}
                 style={{
                   position: 'relative',
-                  padding: '12px 22px',
+                  padding: '12px 24px',
                   borderRadius: '14px',
                   border: 'none',
                   backgroundColor: 'transparent',
-                  color: isActive ? '#FFFFFF' : '#94A3B8',
+                  color: isActive ? '#FFFFFF' : '#CBD5E1',
                   fontSize: '13px',
                   fontWeight: '800',
                   cursor: 'pointer',
@@ -361,14 +361,14 @@ ${passenger}`;
                 {isActive && (
                   <motion.div
                     layoutId="active-tab-glow"
-                    style={{ position: 'absolute', inset: 0, backgroundColor: '#0EA5E9', borderRadius: '14px', zIndex: -1, boxShadow: '0 4px 20px rgba(14, 165, 233, 0.4)' }}
+                    style={{ position: 'absolute', inset: 0, backgroundColor: '#0EA5E9', borderRadius: '14px', zIndex: -1, boxShadow: '0 4px 20px rgba(14, 165, 233, 0.5)' }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
                 <Icon size={16} color={isActive ? '#FFFFFF' : '#94A3B8'} />
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
-                  <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '10px', backgroundColor: isActive ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)', color: '#FFFFFF' }}>
+                  <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', backgroundColor: isActive ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', fontWeight: '800' }}>
                     {tab.count}
                   </span>
                 )}
@@ -393,12 +393,12 @@ ${passenger}`;
             >
               {/* Filter Bar */}
               <div style={{ position: 'relative', marginBottom: '24px' }}>
-                <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '16px', top: '16px' }} />
+                <Search size={18} color="#38BDF8" style={{ position: 'absolute', left: '16px', top: '16px' }} />
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Filter flights by callsign (e.g. DLH7K, BAW720, WZZ4JK), airline, or city..."
-                  style={{ width: '100%', backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px', padding: '14px 16px 14px 48px', color: '#FFFFFF', fontSize: '14px', outline: 'none', boxSizing: 'border-box', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)' }}
+                  style={{ width: '100%', backgroundColor: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '16px', padding: '14px 16px 14px 48px', color: '#FFFFFF', fontSize: '14px', outline: 'none', boxSizing: 'border-box', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}
                 />
               </div>
 
@@ -407,36 +407,43 @@ ${passenger}`;
                 {displayedFlights.map((fl, idx) => (
                   <motion.div
                     key={fl.id}
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    initial={{ opacity: 0, y: 20, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.3, delay: idx * 0.05 }}
-                    whileHover={{ y: -4, boxShadow: '0 12px 30px rgba(14, 165, 233, 0.15)' }}
-                    style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: '24px', borderRadius: '22px', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backdropFilter: 'blur(12px)', transition: 'border-color 0.2s', position: 'relative', overflow: 'hidden' }}
+                    whileHover={{ y: -5, borderColor: 'rgba(56, 189, 248, 0.4)', boxShadow: '0 16px 36px rgba(14, 165, 233, 0.18)' }}
+                    style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: '24px', borderRadius: '22px', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backdropFilter: 'blur(12px)', transition: 'all 0.25s ease', position: 'relative', overflow: 'hidden' }}
                   >
+                    {/* Top Accent Bar */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent)' }} />
+
                     {/* Top Header */}
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                          <span style={{ background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', padding: '4px 10px', borderRadius: '8px', fontSize: '14px', fontWeight: '900', color: '#FFFFFF' }}>
+                          <span style={{ background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', padding: '5px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '900', color: '#FFFFFF', letterSpacing: '0.03em', boxShadow: '0 2px 10px rgba(14, 165, 233, 0.3)' }}>
                             {fl.flight_number}
                           </span>
-                          <span style={{ fontSize: '13px', fontWeight: '600', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fl.carrier}</span>
+                          <span style={{ fontSize: '13px', fontWeight: '700', color: '#CBD5E1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fl.carrier}</span>
                         </div>
-                        <span style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '4px 12px', borderRadius: '10px', fontSize: '15px', fontWeight: '900', color: '#34D399', flexShrink: 0 }}>
+                        <span style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.4)', padding: '4px 12px', borderRadius: '10px', fontSize: '15px', fontWeight: '900', color: '#34D399', flexShrink: 0, boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)' }}>
                           €{fl.statutory_amount_eur.toFixed(0)}
                         </span>
                       </div>
 
-                      <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#FFFFFF', margin: '0 0 10px 0', lineHeight: 1.35 }}>
+                      <h3 style={{ fontSize: '17px', fontWeight: '800', color: '#FFFFFF', margin: '0 0 12px 0', lineHeight: 1.4, letterSpacing: '-0.01em' }}>
                         {fl.route}
                       </h3>
 
-                      <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '12px', display: 'flex', gap: '12px' }}>
-                        <span>⏱️ Delay: <strong style={{ color: '#FBBF24' }}>{fl.delay_duration}</strong></span>
-                        <span>Date: <strong style={{ color: '#FFFFFF' }}>{fl.flight_date}</strong></span>
+                      <div style={{ fontSize: '12px', color: '#CBD5E1', marginBottom: '14px', display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ background: 'rgba(251, 191, 36, 0.12)', border: '1px solid rgba(251, 191, 36, 0.3)', padding: '3px 8px', borderRadius: '6px', color: '#FBBF24', fontWeight: '700' }}>
+                          ⏱️ Delay: {fl.delay_duration}
+                        </span>
+                        <span style={{ color: '#94A3B8', fontWeight: '600' }}>Date: <strong style={{ color: '#F1F5F9' }}>{fl.flight_date}</strong></span>
                       </div>
 
-                      <div style={{ fontSize: '11px', color: '#38BDF8', fontFamily: 'monospace', backgroundColor: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '10px', borderRadius: '10px', marginBottom: '18px', lineHeight: 1.4, wordBreak: 'break-all' }}>
+                      {/* METAR Code Box */}
+                      <div style={{ fontSize: '11px', color: '#38BDF8', fontFamily: "'JetBrains Mono', monospace", backgroundColor: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(56, 189, 248, 0.25)', padding: '12px', borderRadius: '12px', marginBottom: '20px', lineHeight: 1.5, wordBreak: 'break-all', boxShadow: 'inset 0 2px 6px rgba(0, 0, 0, 0.4)' }}>
+                        <div style={{ fontSize: '9px', fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Empirical NOAA METAR Audit Log</div>
                         {fl.metar_verdict}
                       </div>
                     </div>
@@ -445,7 +452,7 @@ ${passenger}`;
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleSelectFlight(fl)}
-                      style={{ width: '100%', padding: '14px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', color: '#FFFFFF', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 16px rgba(14, 165, 233, 0.3)' }}
+                      style={{ width: '100%', padding: '14px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)', color: '#FFFFFF', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 18px rgba(14, 165, 233, 0.4)' }}
                     >
                       <Sparkles size={16} /> File Claim (€{fl.statutory_amount_eur.toFixed(0)}) <ArrowRight size={16} />
                     </motion.button>
