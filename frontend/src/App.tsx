@@ -13,7 +13,8 @@ import {
   RefreshCcw,
   ChevronDown,
   Send,
-  Radio
+  Radio,
+  Loader2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -35,18 +36,19 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(6);
 
   const [eligibleFlights, setEligibleFlights] = useState<EligibleFlight[]>([]);
   const [ocrText, setOcrText] = useState(
-    "PASSENGER: Alex Morgan\nFLIGHT: DLH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00"
+    "BOARDING PASS & EXPENSE RECEIPT\nPASSENGER NAME: Alex Morgan\nFLIGHT: LH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00"
   );
 
   const [claimData, setClaimData] = useState({
     claimId: "CLM-2026-LIVE-992",
     carrier: "Lufthansa German Airlines",
-    flightNumber: "DLH7K",
+    flightNumber: "LH401",
     pnr: "PNR-LH992",
     passengerName: "Alex Morgan",
     passengerEmail: "alex.morgan@example.com",
@@ -162,7 +164,60 @@ ${passenger}`;
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setUploadedImage(imageUrl);
-      setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER: Alex Morgan\nFLIGHT: ${claimData.flightNumber}\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
+      setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: LH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
+    }
+  };
+
+  // Real Backend POST Connection to /api/pipeline/upload-document
+  const handleParseDocumentBackend = async () => {
+    setIsParsing(true);
+    try {
+      const response = await fetch('/api/pipeline/upload-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          raw_ocr_text: ocrText,
+          filename: uploadedImage ? "uploaded_document.jpg" : "boarding_pass.txt"
+        })
+      });
+
+      if (response.ok) {
+        const resData = await response.json();
+        const pkg = resData.decision_package;
+        if (pkg) {
+          setClaimData({
+            claimId: pkg.decision_id || "CLM-2026-LH401-992",
+            carrier: pkg.flight_info?.carrier || "Lufthansa German Airlines",
+            flightNumber: pkg.flight_info?.flight_number || "LH401",
+            pnr: pkg.pnr_code || "PNR-LH992",
+            passengerName: pkg.passenger_name || "Alex Morgan",
+            passengerEmail: "alex.morgan@example.com",
+            delayDuration: pkg.flight_info?.delay_duration || "4h 15m",
+            statutoryEur: pkg.compensation?.statutory_amount_eur || 600.0,
+            receiptsEur: pkg.compensation?.duty_of_care_expenses_eur || 65.0,
+            flightDate: "2026-09-01",
+            route: pkg.flight_info?.route || "Frankfurt (FRA) ➔ New York (JFK)"
+          });
+
+          setLegalNotice(
+            generateLegalLetter(
+              pkg.flight_info?.carrier || "Lufthansa German Airlines",
+              pkg.flight_info?.flight_number || "LH401",
+              pkg.pnr_code || "PNR-LH992",
+              pkg.passenger_name || "Alex Morgan",
+              pkg.compensation?.statutory_amount_eur || 600.0,
+              pkg.compensation?.duty_of_care_expenses_eur || 65.0,
+              pkg.flight_info?.route || "Frankfurt (FRA) ➔ New York (JFK)",
+              "2026-09-01"
+            )
+          );
+        }
+      }
+    } catch (e) {
+      console.error("Backend OCR endpoint parse error:", e);
+    } finally {
+      setIsParsing(false);
+      setActiveTab('claim');
     }
   };
 
@@ -269,7 +324,7 @@ ${passenger}`;
 
         <AnimatePresence mode="wait">
           
-          {/* TAB 1: ELIGIBLE FLIGHTS DATABASE - 100% RESPONSIVE AUTO-FIT GRID */}
+          {/* TAB 1: ELIGIBLE FLIGHTS DATABASE */}
           {activeTab === 'database' && (
             <motion.div
               key="database"
@@ -289,7 +344,7 @@ ${passenger}`;
                 />
               </div>
 
-              {/* Responsive Cards Grid: 1 column on Mobile, 2 on Desktop */}
+              {/* Responsive Cards Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '16px', marginBottom: '20px' }}>
                 {displayedFlights.map((fl) => (
                   <div
@@ -346,7 +401,7 @@ ${passenger}`;
             </motion.div>
           )}
 
-          {/* TAB 2: ACTIVE CLAIM WORKSPACE - RESPONSIVE 1-COLUMN MOBILE LAYOUT */}
+          {/* TAB 2: ACTIVE CLAIM WORKSPACE */}
           {activeTab === 'claim' && (
             <motion.div
               key="claim"
@@ -386,7 +441,7 @@ ${passenger}`;
                 </div>
               </div>
 
-              {/* Form & Demand Notice - Responsive Stack on Mobile */}
+              {/* Form & Demand Notice */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
                 <div style={{ backgroundColor: '#0F172A', padding: '20px', borderRadius: '18px', border: '1px solid #1E293B' }}>
                   <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#FFFFFF', margin: '0 0 14px 0' }}>Passenger &amp; Flight Info</h3>
@@ -487,10 +542,12 @@ ${passenger}`;
               />
 
               <button
-                onClick={() => setActiveTab('claim')}
-                style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', backgroundColor: '#0EA5E9', color: '#FFFFFF', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}
+                onClick={handleParseDocumentBackend}
+                disabled={isParsing}
+                style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', backgroundColor: '#0EA5E9', color: '#FFFFFF', fontSize: '14px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
-                Parse Document &amp; Generate Claim
+                {isParsing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
+                {isParsing ? "Processing via Strands AI Agents..." : "Parse Document & Generate Claim"}
               </button>
             </motion.div>
           )}

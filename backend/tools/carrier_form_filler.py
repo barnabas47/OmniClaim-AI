@@ -88,7 +88,7 @@ Represented by OmniClaim AI Autonomous Passenger Rights Advocate
         },
         "drafted_legal_letter": {
             "subject": f"FORMAL DEMAND: EU261 Compensation €{compensation_amount_eur} - Flight {flight_number} (PNR: {pnr_code})",
-            "body": legal_legal_letter_body if 'legal_legal_letter_body' in locals() else legal_letter_body
+            "body": legal_letter_body
         }
     }
 
