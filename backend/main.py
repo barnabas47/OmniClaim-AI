@@ -64,36 +64,13 @@ def init_db(reset: bool = False):
     
     cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_flight_number_date ON eligible_flights(flight_number, flight_date)")
     
-    from datetime import datetime, timedelta
-    today = datetime.now()
-    d1 = (today - timedelta(days=1)).strftime("%Y-%m-%d")
-    d2 = (today - timedelta(days=2)).strftime("%Y-%m-%d")
-    d3 = (today - timedelta(days=3)).strftime("%Y-%m-%d")
-    d4 = (today - timedelta(days=4)).strftime("%Y-%m-%d")
-    d6 = (today - timedelta(days=6)).strftime("%Y-%m-%d")
+    # Clean up any legacy hardcoded seed entries if present
+    try:
+        cursor.execute("DELETE FROM eligible_flights WHERE flight_date != date('now')")
+    except Exception as e:
+        logger.warning(f"Legacy seed purge warning: {e}")
 
-    # 1. Insert multi-date historical delayed flights seed data
-    historical_seed = [
-        ("DLH401", "Lufthansa German Airlines", "Frankfurt (FRA) ➔ New York (JFK)", "4h 15m", "Live Telemetry: Weather Bluff Disproved via NOAA METAR", 600.0, "NOAA METAR [EDDF]: METAR EDDF CAVOK 21/10 Q1015 NOSIG", "97.2% Normal Operations", d1),
-        ("BAW117", "British Airways", "London Heathrow (LHR) ➔ New York (JFK)", "3h 45m", "Live Telemetry: Weather Bluff Disproved via NOAA METAR", 600.0, "NOAA METAR [EGLL]: METAR EGLL CAVOK 19/08 Q1018 NOSIG", "95.8% Normal Operations", d1),
-        ("WZZ2301", "Wizz Air", "Milan Malpensa (MXP) ➔ Budapest (BUD)", "5h 10m", "Live Telemetry: Weather Bluff Disproved via NOAA METAR", 400.0, "NOAA METAR [LIMC]: METAR LIMC CAVOK 24/19 Q1018 NOSIG", "98.1% Normal Operations", d2),
-        ("AFR1264", "Air France", "Paris CDG (CDG) ➔ Budapest (BUD)", "4h 30m", "Live Telemetry: Weather Bluff Disproved via NOAA METAR", 400.0, "NOAA METAR [LFPG]: METAR LFPG CAVOK 23/12 Q1016 NOSIG", "96.4% Normal Operations", d3),
-        ("KLM1973", "KLM Royal Dutch", "Amsterdam (AMS) ➔ Budapest (BUD)", "3h 50m", "Live Telemetry: Weather Bluff Disproved via NOAA METAR", 400.0, "NOAA METAR [EHAM]: METAR EHAM CAVOK 20/11 Q1019 NOSIG", "97.5% Normal Operations", d4),
-        ("RYR8821", "Ryanair", "London Stansted (STN) ➔ Budapest (BUD)", "4h 50m", "Live Telemetry: Weather Bluff Disproved via NOAA METAR", 400.0, "NOAA METAR [EGSS]: METAR EGSS CAVOK 22/09 Q1020 NOSIG", "96.0% Normal Operations", d6),
-    ]
-    
-    for fl in historical_seed:
-        try:
-            cursor.execute("""
-                INSERT INTO eligible_flights 
-                (flight_number, carrier, route, delay_duration, delay_reason, statutory_amount_eur, metar_verdict, parallel_departure_rate, flight_date, last_api_sync_timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(flight_number, flight_date) DO NOTHING
-            """, (*fl, time.strftime("%Y-%m-%d %H:%M:%S")))
-        except Exception as e:
-            logger.error(f"Historical seed error: {e}")
-
-    # 2. Insert live OpenSky + NOAA telemetry
+    # Insert ONLY real 100% live OpenSky + NOAA telemetry stream
     live_flights = aggregate_and_deduplicate_live_telemetry()
     for fl in live_flights:
         try:

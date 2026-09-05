@@ -311,20 +311,20 @@ ${passenger}`;
         </div>
 
         {/* Live Telemetry Status Badges & Shimmer Sync Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, whiteSpace: 'nowrap' }}>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={handleSyncLive}
             disabled={isSyncing}
-            style={{ background: 'linear-gradient(135deg, #0F172A, #1E293B)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38BDF8', padding: '7px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)' }}
+            style={{ background: 'linear-gradient(135deg, #0F172A, #1E293B)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38BDF8', padding: '7px 14px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)', whiteSpace: 'nowrap', flexShrink: 0 }}
           >
             <RefreshCcw size={13} className={isSyncing ? "animate-spin" : ""} /> {isSyncing ? "Scanning..." : "Sync Telemetry"}
           </motion.button>
           
-          <div className="hidden md:flex" style={{ alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '6px 12px', borderRadius: '30px' }}>
-            <Radio size={11} color="#10B981" className="animate-pulse" />
-            <span style={{ fontSize: '11px', fontWeight: '800', color: '#10B981', letterSpacing: '0.02em' }}>100% Live OpenSky &amp; NOAA</span>
+          <div className="hidden md:inline-flex" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '6px 14px', borderRadius: '30px', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            <Radio size={12} color="#10B981" className="animate-pulse" />
+            <span style={{ fontSize: '11px', fontWeight: '800', color: '#10B981', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>100% Live OpenSky &amp; NOAA</span>
           </div>
         </div>
       </header>
