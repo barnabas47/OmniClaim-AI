@@ -105,10 +105,19 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
 
     # 1. Domain Knowledge Match: Identify Airline Carrier & Flight Callsign
     detected_carrier_info = None
-    for kw, info in AVIATION_KNOWLEDGE_BASE["AIRLINES"].items():
-        if kw in text_upper or kw in file_upper:
-            detected_carrier_info = info
-            break
+    sorted_keywords = sorted(AVIATION_KNOWLEDGE_BASE["AIRLINES"].keys(), key=len, reverse=True)
+
+    for kw in sorted_keywords:
+        info = AVIATION_KNOWLEDGE_BASE["AIRLINES"][kw]
+        if len(kw) <= 3:
+            pattern = r"\b" + re.escape(kw) + r"\b"
+            if re.search(pattern, text_upper) or re.search(pattern, file_upper):
+                detected_carrier_info = info
+                break
+        else:
+            if kw in text_upper or kw in file_upper:
+                detected_carrier_info = info
+                break
 
     if detected_carrier_info:
         flight_number = detected_carrier_info["callsign"]

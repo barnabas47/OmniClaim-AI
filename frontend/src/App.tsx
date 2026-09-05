@@ -133,6 +133,25 @@ Sincerely,
 ${passenger}`;
   };
 
+  const updateClaimField = (field: string, val: any) => {
+    setClaimData(prev => {
+      const updated = { ...prev, [field]: val };
+      setLegalNotice(
+        generateLegalLetter(
+          updated.carrier,
+          updated.flightNumber,
+          updated.pnr,
+          updated.passengerName,
+          updated.statutoryEur,
+          updated.receiptsEur,
+          updated.route,
+          updated.flightDate
+        )
+      );
+      return updated;
+    });
+  };
+
   const [legalNotice, setLegalNotice] = useState(
     generateLegalLetter(claimData.carrier, claimData.flightNumber, claimData.pnr, claimData.passengerName, claimData.statutoryEur, claimData.receiptsEur, claimData.route, claimData.flightDate)
   );
@@ -632,26 +651,31 @@ ${passenger}`;
               {/* Form & Demand Letter */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
                 <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', padding: '24px', borderRadius: '22px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#FFFFFF', margin: '0 0 16px 0' }}>Passenger &amp; Flight Info</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#FFFFFF', margin: 0 }}>Passenger &amp; Flight Info Verification</h3>
+                    <span style={{ fontSize: '10px', background: 'rgba(14, 165, 233, 0.15)', border: '1px solid rgba(14, 165, 233, 0.3)', color: '#38BDF8', padding: '3px 8px', borderRadius: '6px', fontWeight: '800' }}>
+                      🔍 Review &amp; Edit Details
+                    </span>
+                  </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px' }}>
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>AIRLINE</label>
-                      <input value={claimData.carrier} onChange={(e) => setClaimData({...claimData, carrier: e.target.value})} style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.carrier} onChange={(e) => updateClaimField('carrier', e.target.value)} style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>FLIGHT CALLSIGN</label>
-                      <input value={claimData.flightNumber} onChange={(e) => setClaimData({...claimData, flightNumber: e.target.value})} style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.flightNumber} onChange={(e) => updateClaimField('flightNumber', e.target.value)} style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>BOOKING PNR</label>
-                      <input value={claimData.pnr} onChange={(e) => setClaimData({...claimData, pnr: e.target.value})} style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.pnr} onChange={(e) => updateClaimField('pnr', e.target.value)} style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>PASSENGER NAME</label>
-                      <input value={claimData.passengerName} onChange={(e) => setClaimData({...claimData, passengerName: e.target.value})} style={{ width: '100%', backgroundColor: '#1E293B', border: 'none', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.passengerName} onChange={(e) => updateClaimField('passengerName', e.target.value)} style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
                   </div>
                 </div>
