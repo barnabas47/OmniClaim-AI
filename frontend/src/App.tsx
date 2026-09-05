@@ -238,11 +238,21 @@ ${passenger}`;
     } catch (e) {}
   };
 
-  const filteredFlights = eligibleFlights.filter(fl => 
-    fl.flight_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    fl.carrier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    fl.route.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string>("ALL");
+
+  const filteredFlights = eligibleFlights.filter(fl => {
+    const matchesSearch = 
+      fl.flight_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fl.carrier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fl.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fl.flight_date.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (selectedDateFilter === "ALL") return matchesSearch;
+    return matchesSearch && fl.flight_date === selectedDateFilter;
+  });
+
+  const availableDates = Array.from(new Set(eligibleFlights.map(f => f.flight_date))).sort().reverse();
+
 
   const displayedFlights = filteredFlights.slice(0, visibleLimit);
   const totalValue = claimData.statutoryEur + claimData.receiptsEur;
@@ -392,15 +402,54 @@ ${passenger}`;
               transition={{ duration: 0.25 }}
             >
               {/* Filter Bar */}
-              <div style={{ position: 'relative', marginBottom: '24px' }}>
+              <div style={{ position: 'relative', marginBottom: '16px' }}>
                 <Search size={18} color="#38BDF8" style={{ position: 'absolute', left: '16px', top: '16px' }} />
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter flights by callsign (e.g. DLH7K, BAW720, WZZ4JK), airline, or city..."
+                  placeholder="Filter flights by callsign (e.g. DLH7K, BAW720), airline, city, or date (YYYY-MM-DD)..."
                   style={{ width: '100%', backgroundColor: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '16px', padding: '14px 16px 14px 48px', color: '#FFFFFF', fontSize: '14px', outline: 'none', boxSizing: 'border-box', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}
                 />
               </div>
+
+              {/* Date Filter Pills */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '4px' }}>Date Filter:</span>
+                <button
+                  onClick={() => setSelectedDateFilter('ALL')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: selectedDateFilter === 'ALL' ? '1px solid #0EA5E9' : '1px solid rgba(255, 255, 255, 0.1)',
+                    backgroundColor: selectedDateFilter === 'ALL' ? 'rgba(14, 165, 233, 0.25)' : 'rgba(15, 23, 42, 0.6)',
+                    color: selectedDateFilter === 'ALL' ? '#38BDF8' : '#94A3B8',
+                    fontSize: '12px',
+                    fontWeight: '800',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📅 All Dates ({eligibleFlights.length})
+                </button>
+                {availableDates.map(dateStr => (
+                  <button
+                    key={dateStr}
+                    onClick={() => setSelectedDateFilter(dateStr)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      border: selectedDateFilter === dateStr ? '1px solid #0EA5E9' : '1px solid rgba(255, 255, 255, 0.1)',
+                      backgroundColor: selectedDateFilter === dateStr ? 'rgba(14, 165, 233, 0.25)' : 'rgba(15, 23, 42, 0.6)',
+                      color: selectedDateFilter === dateStr ? '#38BDF8' : '#94A3B8',
+                      fontSize: '12px',
+                      fontWeight: '800',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {dateStr}
+                  </button>
+                ))}
+              </div>
+
 
               {/* Cards Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '28px' }}>
