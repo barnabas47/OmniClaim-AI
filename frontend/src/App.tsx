@@ -354,26 +354,26 @@ ${passenger}`;
           </p>
 
           {/* Floating Metric Badges - Hidden on Mobile to reduce clutter */}
-          <div className="hidden md:flex" style={{ justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
-            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(56, 189, 248, 0.25)', padding: '12px 20px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
+          <div className="hidden md:flex" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
+            <div style={{ flex: '0 0 auto', backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(56, 189, 248, 0.25)', padding: '10px 18px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
               <div style={{ backgroundColor: 'rgba(14, 165, 233, 0.2)', padding: '8px', borderRadius: '12px', display: 'flex' }}><Plane size={18} color="#38BDF8" /></div>
-              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '14px', fontWeight: '800', color: '#FFFFFF' }}>OpenSky Radar</div><div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600' }}>Global Live Telemetry</div></div>
+              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF' }}>OpenSky Radar</div><div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600' }}>Global Live Telemetry</div></div>
             </div>
 
-            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '12px 20px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
+            <div style={{ flex: '0 0 auto', backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '10px 18px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
               <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', padding: '8px', borderRadius: '12px', display: 'flex' }}><CloudSun size={18} color="#34D399" /></div>
-              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '14px', fontWeight: '800', color: '#FFFFFF' }}>NOAA Weather</div><div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600' }}>METAR Bluff Disprover</div></div>
+              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF' }}>NOAA Weather</div><div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600' }}>METAR Bluff Disprover</div></div>
             </div>
 
-            <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(251, 191, 36, 0.25)', padding: '12px 20px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
+            <div style={{ flex: '0 0 auto', backgroundColor: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(251, 191, 36, 0.25)', padding: '10px 18px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px', backdropFilter: 'blur(12px)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)' }}>
               <div style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)', padding: '8px', borderRadius: '12px', display: 'flex' }}><Sparkles size={18} color="#FBBF24" /></div>
-              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '14px', fontWeight: '800', color: '#FFFFFF' }}>€250 - €600</div><div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600' }}>Statutory Rights / PAX</div></div>
+              <div style={{ textAlign: 'left' }}><div style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF' }}>€250 - €600</div><div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600' }}>Statutory Rights / PAX</div></div>
             </div>
           </div>
         </motion.div>
 
         {/* Animated Sliding Tab Bar - Ultra-compact on mobile */}
-        <div style={{ display: 'inline-flex', gap: '4px', backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: '4px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.12)', position: 'relative', width: '100%', maxWidth: '580px', justifyContent: 'space-between', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
+        <div style={{ display: 'inline-flex', gap: '6px', backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.12)', position: 'relative', width: '100%', maxWidth: '640px', justifyContent: 'space-between', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
           {[
             { id: 'database', label: 'Eligible Flights', shortLabel: 'Flights', icon: Database, count: eligibleFlights.length },
             { id: 'claim', label: 'Active Claim & Notice', shortLabel: 'Claim', icon: FileText },
@@ -387,7 +387,7 @@ ${passenger}`;
                 onClick={() => setActiveTab(tab.id as any)}
                 style={{
                   position: 'relative',
-                  padding: '10px 12px',
+                  padding: '10px 14px',
                   borderRadius: '12px',
                   border: 'none',
                   backgroundColor: 'transparent',
@@ -397,7 +397,7 @@ ${passenger}`;
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justify: 'center',
+                  justifyContent: 'center',
                   gap: '6px',
                   flex: 1,
                   zIndex: 1,
@@ -413,7 +413,7 @@ ${passenger}`;
                 )}
                 <Icon size={14} color={isActive ? '#FFFFFF' : '#94A3B8'} />
                 <span className="hidden sm:inline">{tab.label}</span>
-                <span className="inline sm:hidden">{tab.shortLabel}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
                 {tab.count !== undefined && (
                   <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '8px', backgroundColor: isActive ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', fontWeight: '800' }}>
                     {tab.count}
