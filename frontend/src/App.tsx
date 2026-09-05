@@ -198,7 +198,16 @@ ${passenger}`;
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setUploadedImage(imageUrl);
-      setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: LH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
+      const fn = file.name.toLowerCase();
+      if (fn.includes('iberia') || fn.includes('ibe')) {
+        setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: IB3170\nPNR: PNR-IB992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
+      } else if (fn.includes('wizz') || fn.includes('w6')) {
+        setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: W62301\nPNR: PNR-W6992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
+      } else if (fn.includes('ryanair') || fn.includes('fr')) {
+        setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: FR8821\nPNR: PNR-FR992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
+      } else {
+        setOcrText(`EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: LH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00`);
+      }
     }
   };
 

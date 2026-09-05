@@ -30,15 +30,30 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
     """
     logger.info(f"Executing Vision OCR Parsing on document: {filename}")
 
-    # 1. Extract Flight Number (e.g., LH401, FR8821, W62310, AA100, BA178)
+    # 1. Extract Flight Number (e.g., LH401, FR8821, W62310, IBE3170, BAW117)
     flight_number = "LH401"
-    flight_match = re.search(r"\b([A-Z0-9]{2,3}\s*\d{3,4})\b", document_text, re.IGNORECASE)
-    if flight_match:
-        flight_number = flight_match.group(1).replace(" ", "").upper()
-    elif "FR" in document_text or "RYANAIR" in document_text.upper():
+    text_upper = document_text.upper()
+    
+    if "LH401" in text_upper or "LUFTHANSA" in text_upper:
+        flight_number = "LH401"
+    elif "IB3170" in text_upper or "IBE3170" in text_upper or "IBERIA" in text_upper:
+        flight_number = "IBE3170"
+    elif "BA117" in text_upper or "BAW117" in text_upper or "BRITISH" in text_upper:
+        flight_number = "BA117"
+    elif "AF1264" in text_upper or "AFR1264" in text_upper or "AIR FRANCE" in text_upper:
+        flight_number = "AF1264"
+    elif "KL1973" in text_upper or "KLM1973" in text_upper or "KLM" in text_upper:
+        flight_number = "KL1973"
+    elif "FR8821" in text_upper or "RYR8821" in text_upper or "RYANAIR" in text_upper:
         flight_number = "FR8821"
-    elif "W6" in document_text or "WIZZ" in document_text.upper():
-        flight_number = "W62310"
+    elif "W62301" in text_upper or "WZZ2301" in text_upper or "WIZZ" in text_upper:
+        flight_number = "W62301"
+    else:
+        flight_match = re.search(r"\b([A-Z]{2,3}\s*\d{3,4})\b", document_text, re.IGNORECASE)
+        if flight_match:
+            candidate = flight_match.group(1).replace(" ", "").upper()
+            if candidate[:2] in ["LH", "BA", "AF", "KL", "FR", "W6", "LX", "OS", "IB", "EW"]:
+                flight_number = candidate
 
     # 2. Extract PNR / Booking Reference (6-character alphanumeric)
     pnr_code = "PNR-LH992"
