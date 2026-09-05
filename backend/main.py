@@ -22,6 +22,20 @@ from backend.tools.unified_telemetry_aggregator import aggregate_and_deduplicate
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("OmniClaim.API")
 
+app = FastAPI(
+    title="OmniClaim AI 2.0 API",
+    description="Autonomous EU261 Rights & NOAA Audit Engine",
+    version="2.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "omniclaim.db")
 
 def init_db(reset: bool = False):
@@ -47,6 +61,8 @@ def init_db(reset: bool = False):
             UNIQUE(flight_number, flight_date)
         )
     """)
+    
+    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_flight_number_date ON eligible_flights(flight_number, flight_date)")
     
     # 1. Insert multi-date historical delayed flights seed data
     historical_seed = [
