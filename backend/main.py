@@ -158,10 +158,10 @@ def upload_document(req: DocumentUploadRequest):
     except Exception:
         parsed_info = {}
 
-    flight_number = parsed_info.get("flight_number") or "DLH401"
-    passenger_name = parsed_info.get("passenger_name") or "Alex Morgan"
-    pnr_code = parsed_info.get("pnr_code") or "PNR-LH992"
-    receipts_amount_eur = float(parsed_info.get("incurred_expense_receipt_eur") or 65.0)
+    flight_number = parsed_info.get("flight_number") or ""
+    passenger_name = parsed_info.get("passenger_name") or ""
+    pnr_code = parsed_info.get("pnr_code") or ""
+    receipts_amount_eur = float(parsed_info.get("incurred_expense_receipt_eur") or 0.0)
 
     res = orchestrator.process_flight_compensation_pipeline(
         flight_number=flight_number,

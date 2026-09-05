@@ -29,8 +29,8 @@ class OmniClaimOrchestrator:
     def process_flight_compensation_pipeline(
         self,
         flight_number: str,
-        passenger_name: str = "Alex Morgan",
-        pnr_code: str = "PNR-89210",
+        passenger_name: str = "",
+        pnr_code: str = "",
         flight_date: str = "2026-08-22",
         receipts_amount_eur: float = 65.0
     ) -> Dict[str, Any]:

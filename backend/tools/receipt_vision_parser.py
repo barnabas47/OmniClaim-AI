@@ -142,31 +142,35 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
                 detected_carrier_info = info
                 break
 
-    if detected_carrier_info:
+    flight_number = ""
+    flight_match = re.search(r"\b([A-Z0-9]{2,3}\s*\d{3,4})\b", document_text, re.IGNORECASE)
+    if flight_match:
+        candidate = flight_match.group(1).replace(" ", "").upper()
+        if candidate[:2] in ["LH", "BA", "AF", "KL", "FR", "W6", "LX", "OS", "IB", "EW", "U2", "EK", "QR", "TK", "DL", "AA", "UA", "LO", "SK", "AY", "TP", "A3", "VY"] or candidate[:3] in ["DLH", "BAW", "AFR", "KLM", "RYR", "WZZ", "SWR", "AUA", "IBE", "EWG", "EJU", "UAE", "QTR", "THY", "DAL", "AAL", "UAL", "LOT", "SAS", "FIN", "TAP", "AEE", "VLG"]:
+            flight_number = candidate
+    elif detected_carrier_info:
         flight_number = detected_carrier_info["callsign"]
-        default_pnr = detected_carrier_info["pnr"]
-    else:
-        flight_number = "LH401"
-        default_pnr = "PNR-LH992"
-        flight_match = re.search(r"\b([A-Z0-9]{2,3}\s*\d{3,4})\b", document_text, re.IGNORECASE)
-        if flight_match:
-            candidate = flight_match.group(1).replace(" ", "").upper()
-            if candidate[:2] in ["LH", "BA", "AF", "KL", "FR", "W6", "LX", "OS", "IB", "EW", "U2", "EK", "QR", "TK", "DL", "AA", "UA", "LO", "SK", "AY", "TP", "A3", "VY"]:
-                flight_number = candidate
 
     # 2. Domain Knowledge Match: Extract PNR / Booking Reference
-    pnr_code = default_pnr
-    pnr_match = re.search(r"(?:PNR|Booking Ref|Record Locator|Ref)[\s:#]*([A-Z0-9]{5,7})", document_text, re.IGNORECASE)
+    pnr_code = ""
+    pnr_match = re.search(r"(?:PNR|Booking Ref|Record Locator|Ref|Confirmation)[\s:#-]*(?:PNR-)?([A-Z0-9]{5,7})", document_text, re.IGNORECASE)
     if pnr_match:
-        pnr_code = f"PNR-{pnr_match.group(1).upper()}"
+        found_pnr = pnr_match.group(1).upper()
+        pnr_code = f"PNR-{found_pnr}"
 
     # 3. Domain Knowledge Match: Extract Passenger Name
-    passenger_name = "Alex Morgan"
-    name_match = re.search(r"(?:PASSENGER NAME|PASSENGER|FULL NAME|CUSTOMER)[\s:#]+([A-Za-z]+(?:\s+[A-Za-z]+)+)", document_text, re.IGNORECASE)
-    if name_match:
-        clean_name = name_match.group(1).strip()
-        if len(clean_name) > 3 and not any(kw in clean_name.lower() for kw in ["boarding", "flight", "gate", "seat"]):
-            passenger_name = clean_name.title()
+    passenger_name = ""
+    reverse_name_match = re.search(r"\b([A-Z]{2,15}),\s*([A-Z]{2,15})\b", document_text, re.IGNORECASE)
+    if reverse_name_match:
+        last = reverse_name_match.group(1).title()
+        first = reverse_name_match.group(2).title()
+        passenger_name = f"{first} {last}"
+    else:
+        name_match = re.search(r"(?:PASSENGER NAME|PASSENGER|FULL NAME|CUSTOMER|NAME)[\s:#]+([A-Za-z]+(?:[ \t]+[A-Za-z]+)+)", document_text, re.IGNORECASE)
+        if name_match:
+            clean_name = name_match.group(1).strip()
+            if len(clean_name) > 3 and not any(kw in clean_name.lower() for kw in ["boarding", "flight", "gate", "seat", "from", "date"]):
+                passenger_name = clean_name.title()
 
     # 4. Domain Knowledge Match: Extract Duty of Care Expense Amounts
     expense_amount = 0.0

@@ -89,49 +89,51 @@ export default function App() {
   const [selectedFlightModal, setSelectedFlightModal] = useState<EligibleFlight | null>(null);
 
   const [eligibleFlights, setEligibleFlights] = useState<EligibleFlight[]>([]);
-  const [ocrText, setOcrText] = useState(
-    "BOARDING PASS & EXPENSE RECEIPT\nPASSENGER NAME: Alex Morgan\nFLIGHT: LH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00"
-  );
+  const [ocrText, setOcrText] = useState("");
 
   const [claimData, setClaimData] = useState({
-    claimId: "CLM-2026-LIVE-992",
-    carrier: "Lufthansa German Airlines",
-    flightNumber: "LH401",
-    pnr: "PNR-LH992",
-    passengerName: "Alex Morgan",
-    passengerEmail: "alex.morgan@example.com",
-    delayDuration: "4h 15m",
-    statutoryEur: 600.0,
-    receiptsEur: 65.0,
-    flightDate: "2026-09-01",
-    route: "Frankfurt (FRA) ➔ New York (JFK)"
+    claimId: "CLM-2026-NEW",
+    carrier: "",
+    flightNumber: "",
+    pnr: "",
+    passengerName: "",
+    passengerEmail: "",
+    delayDuration: "",
+    statutoryEur: 0,
+    receiptsEur: 0,
+    flightDate: "",
+    route: ""
   });
 
   const generateLegalLetter = (carrier: string, flightNo: string, pnr: string, passenger: string, statEur: number, recEur: number, route: string, date: string) => {
-    const total = statEur + recEur;
+    if (!carrier && !flightNo && !passenger && !pnr) {
+      return `[LEGAL DEMAND NOTICE PREVIEW]
+Please select an eligible flight from the live table or upload a boarding pass/receipt image to automatically populate and generate your EU261 legal demand notice.`;
+    }
+    const total = (statEur || 0) + (recEur || 0);
     return `FORMAL DEMAND FOR EU261 COMPENSATION & EXPENSE REIMBURSEMENT
 Regulation (EC) No 261/2004 Articles 5, 7, and 9
 
-TO: Customer Relations Department, ${carrier}
-RE: Statutory Claim for Delayed Flight ${flightNo} (PNR: ${pnr})
-PASSENGER: ${passenger}
-FLIGHT DATE: ${date} | ROUTE: ${route}
+TO: Customer Relations Department, ${carrier || '[AIRLINE CARRIER]'}
+RE: Statutory Claim for Delayed Flight ${flightNo || '[FLIGHT NUMBER]'} (PNR: ${pnr || '[BOOKING PNR]'})
+PASSENGER: ${passenger || '[PASSENGER FULL NAME]'}
+FLIGHT DATE: ${date || '[FLIGHT DATE]'} | ROUTE: ${route || '[ROUTE]'}
 
-1. STATUTORY COMPENSATION (Article 7(1)(c))
-Under Regulation (EC) 261/2004 Article 7(1)(c), statutory compensation of €${statEur.toFixed(2)} is strictly due per passenger for delays exceeding 3 hours.
+1. STATUTORY COMPENSATION (Article 7)
+Under Regulation (EC) 261/2004 Article 7, statutory compensation of €${(statEur || 0).toFixed(2)} is strictly due per passenger for delays exceeding 3 hours.
 
 2. DISPROVAL OF FORCE MAJEURE / WEATHER DEFENCE VIA LIVE NOAA METAR
 Your airline's preliminary claim of "extraordinary weather circumstances" is legally rejected based on real-time NOAA meteorological observations. Official METAR reports confirmed VFR clear conditions (Visibility 10,000m). Parallel flights operated normally.
 
 3. RIGHT TO CARE EXPENSES (Article 9)
-Out-of-pocket food and refreshment expenses incurred during the delay totaling €${recEur.toFixed(2)} are attached for immediate reimbursement.
+Out-of-pocket food and refreshment expenses incurred during the delay totaling €${(recEur || 0).toFixed(2)} are attached for immediate reimbursement.
 
 TOTAL PAYABLE DEMAND: €${total.toFixed(2)} EUR
 
 Please remit statutory payment of €${total.toFixed(2)} within 14 calendar days.
 
 Sincerely,
-${passenger}`;
+${passenger || '[PASSENGER NAME]'}`;
   };
 
   const updateClaimField = (field: string, val: any) => {
@@ -164,28 +166,6 @@ ${passenger}`;
         if (data.status === "SUCCESS" && data.flights) {
           setEligibleFlights(data.flights);
           setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-          if (data.flights.length > 0) {
-            const lhFlight = data.flights.find((fl: EligibleFlight) => 
-              fl.carrier.toLowerCase().includes('lufthansa') || 
-              fl.flight_number.startsWith('LH') || 
-              fl.flight_number.startsWith('DLH')
-            );
-            const initialFlight = lhFlight || data.flights[0];
-            setClaimData({
-              claimId: `CLM-2026-${initialFlight.flight_number}-992`,
-              carrier: initialFlight.carrier,
-              flightNumber: initialFlight.flight_number,
-              pnr: "PNR-LH992",
-              passengerName: "Alex Morgan",
-              passengerEmail: "alex.morgan@example.com",
-              delayDuration: initialFlight.delay_duration,
-              statutoryEur: initialFlight.statutory_amount_eur,
-              receiptsEur: 65.0,
-              flightDate: initialFlight.flight_date,
-              route: initialFlight.route
-            });
-            setLegalNotice(generateLegalLetter(initialFlight.carrier, initialFlight.flight_number, "PNR-LH992", "Alex Morgan", initialFlight.statutory_amount_eur, 65.0, initialFlight.route, initialFlight.flight_date));
-          }
         }
       })
       .catch(() => {});
@@ -218,18 +198,18 @@ ${passenger}`;
       claimId: `CLM-2026-${fl.flight_number}-992`,
       carrier: fl.carrier,
       flightNumber: fl.flight_number,
-      pnr: "PNR-LH992",
-      passengerName: "Alex Morgan",
-      passengerEmail: "alex.morgan@example.com",
+      pnr: "",
+      passengerName: "",
+      passengerEmail: "",
       delayDuration: fl.delay_duration,
       statutoryEur: fl.statutory_amount_eur,
-      receiptsEur: 65.0,
+      receiptsEur: 0,
       flightDate: fl.flight_date,
       route: fl.route
     });
 
     setLegalNotice(
-      generateLegalLetter(fl.carrier, fl.flight_number, "PNR-LH992", "Alex Morgan", fl.statutory_amount_eur, 65.0, fl.route, fl.flight_date)
+      generateLegalLetter(fl.carrier, fl.flight_number, "", "", fl.statutory_amount_eur, 0, fl.route, fl.flight_date)
     );
 
     setSelectedFlightModal(fl);
@@ -249,44 +229,44 @@ ${passenger}`;
 
       if (response.ok) {
         const resData = await response.json();
-        const pkg = resData.decision_package;
-        if (pkg) {
-          const updatedCarrier = pkg.flight_info?.carrier || "Lufthansa German Airlines";
-          const updatedFlight = pkg.flight_info?.flight_number || "LH401";
-          const updatedPnr = pkg.pnr_code || "PNR-LH992";
-          const updatedPassenger = pkg.passenger_name || "Alex Morgan";
-          const updatedStat = pkg.compensation?.statutory_amount_eur || 600.0;
-          const updatedRec = pkg.compensation?.duty_of_care_expenses_eur || 65.0;
-          const updatedRoute = pkg.flight_info?.route || "Frankfurt (FRA) ➔ New York (JFK)";
-          const updatedDate = "2026-09-01";
+        const pkg = resData.decision_package || {};
+        const ocrInfo = resData.extracted_ocr || {};
 
-          setClaimData({
-            claimId: pkg.decision_id || "CLM-2026-LH401-992",
-            carrier: updatedCarrier,
-            flightNumber: updatedFlight,
-            pnr: updatedPnr,
-            passengerName: updatedPassenger,
-            passengerEmail: "alex.morgan@example.com",
-            delayDuration: pkg.flight_info?.delay_duration || "4h 15m",
-            statutoryEur: updatedStat,
-            receiptsEur: updatedRec,
-            flightDate: updatedDate,
-            route: updatedRoute
-          });
+        const updatedCarrier = pkg.flight_info?.carrier || ocrInfo.knowledge_base_match || "";
+        const updatedFlight = pkg.flight_info?.flight_number || ocrInfo.flight_number || "";
+        const updatedPnr = pkg.pnr_code || ocrInfo.pnr_code || "";
+        const updatedPassenger = pkg.passenger_name || ocrInfo.passenger_name || "";
+        const updatedStat = pkg.compensation?.statutory_amount_eur || 600.0;
+        const updatedRec = pkg.compensation?.duty_of_care_expenses_eur || ocrInfo.incurred_expense_receipt_eur || 0.0;
+        const updatedRoute = pkg.flight_info?.route || "";
+        const updatedDate = new Date().toISOString().split('T')[0];
 
-          setLegalNotice(
-            generateLegalLetter(
-              updatedCarrier,
-              updatedFlight,
-              updatedPnr,
-              updatedPassenger,
-              updatedStat,
-              updatedRec,
-              updatedRoute,
-              updatedDate
-            )
-          );
-        }
+        setClaimData({
+          claimId: pkg.decision_id || "CLM-2026-CUSTOM",
+          carrier: updatedCarrier,
+          flightNumber: updatedFlight,
+          pnr: updatedPnr,
+          passengerName: updatedPassenger,
+          passengerEmail: "",
+          delayDuration: pkg.flight_info?.delay_duration || "",
+          statutoryEur: updatedStat,
+          receiptsEur: updatedRec,
+          flightDate: updatedDate,
+          route: updatedRoute
+        });
+
+        setLegalNotice(
+          generateLegalLetter(
+            updatedCarrier,
+            updatedFlight,
+            updatedPnr,
+            updatedPassenger,
+            updatedStat,
+            updatedRec,
+            updatedRoute,
+            updatedDate
+          )
+        );
       }
     } catch (e) {
       console.error("Backend OCR parse error:", e);
@@ -300,21 +280,22 @@ ${passenger}`;
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setUploadedImage(imageUrl);
-      const fn = file.name.toLowerCase();
-      let extractedText = "";
-      if (fn.includes('iberia') || fn.includes('ibe')) {
-        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: IB3170\nPNR: PNR-IB992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
-      } else if (fn.includes('wizz') || fn.includes('w6')) {
-        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: W62301\nPNR: PNR-W6992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
-      } else if (fn.includes('ryanair') || fn.includes('fr')) {
-        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: FR8821\nPNR: PNR-FR992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
-      } else if (fn.includes('eurowings') || fn.includes('ew')) {
-        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: EW9782\nPNR: PNR-EW992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
+      
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const content = (evt.target?.result as string) || "";
+        const textToParse = content.length > 5 ? content : `UPLOADED BOARDING PASS FILE: ${file.name}`;
+        setOcrText(textToParse);
+        parseDocumentWithText(textToParse, file.name);
+      };
+
+      if (file.type.includes('text') || file.name.endsWith('.txt')) {
+        reader.readAsText(file);
       } else {
-        extractedText = `EXTRACTED FROM UPLOADED FILE (${file.name}):\nPASSENGER NAME: Alex Morgan\nFLIGHT: LH401\nPNR: PNR-LH992\nAIRPORT MEAL RECEIPT: EUR 65.00`;
+        const fileHintText = `BOARDING PASS FILE: ${file.name}`;
+        setOcrText(fileHintText);
+        parseDocumentWithText(fileHintText, file.name);
       }
-      setOcrText(extractedText);
-      parseDocumentWithText(extractedText, file.name);
     }
   };
 
@@ -713,22 +694,22 @@ ${passenger}`;
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px' }}>
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>AIRLINE</label>
-                      <input value={claimData.carrier} onChange={(e) => updateClaimField('carrier', e.target.value)} style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.carrier} onChange={(e) => updateClaimField('carrier', e.target.value)} placeholder="e.g. Lufthansa German Airlines" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>FLIGHT CALLSIGN</label>
-                      <input value={claimData.flightNumber} onChange={(e) => updateClaimField('flightNumber', e.target.value)} style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.flightNumber} onChange={(e) => updateClaimField('flightNumber', e.target.value)} placeholder="e.g. LH401" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>BOOKING PNR</label>
-                      <input value={claimData.pnr} onChange={(e) => updateClaimField('pnr', e.target.value)} style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.pnr} onChange={(e) => updateClaimField('pnr', e.target.value)} placeholder="e.g. LH992" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>PASSENGER NAME</label>
-                      <input value={claimData.passengerName} onChange={(e) => updateClaimField('passengerName', e.target.value)} style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.passengerName} onChange={(e) => updateClaimField('passengerName', e.target.value)} placeholder="e.g. Alex Morgan" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
                   </div>
                 </div>
