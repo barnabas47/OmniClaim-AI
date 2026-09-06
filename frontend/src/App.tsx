@@ -232,14 +232,14 @@ ${passenger || '[PASSENGER NAME]'}`;
         const pkg = resData.decision_package || {};
         const ocrInfo = resData.extracted_ocr || {};
 
-        const updatedCarrier = ocrInfo.knowledge_base_match || pkg.flight_info?.carrier || claimData.carrier || "Lufthansa German Airlines";
-        const updatedFlight = ocrInfo.flight_number || pkg.flight_info?.flight_number || claimData.flightNumber || "LH401";
-        const updatedPnr = ocrInfo.pnr_code || claimData.pnr || "PNR-LH992";
-        const updatedPassenger = ocrInfo.passenger_name || claimData.passengerName || "Alex Morgan";
-        const updatedStat = pkg.compensation?.statutory_amount_eur || claimData.statutoryEur || 600.0;
-        const updatedRec = ocrInfo.incurred_expense_receipt_eur !== undefined ? ocrInfo.incurred_expense_receipt_eur : (pkg.compensation?.duty_of_care_expenses_eur || claimData.receiptsEur || 65.0);
-        const updatedRoute = pkg.flight_info?.route || ocrInfo.route || claimData.route || "Frankfurt (FRA) ➔ New York (JFK)";
-        const updatedDate = ocrInfo.flight_date || pkg.flight_info?.flight_date || claimData.flightDate || "2026-09-05";
+        const updatedCarrier = ocrInfo.knowledge_base_match || pkg.flight_info?.carrier || "Lufthansa German Airlines";
+        const updatedFlight = ocrInfo.flight_number || pkg.flight_info?.flight_number || "LH401";
+        const updatedPnr = ocrInfo.pnr_code || "PNR-LH992";
+        const updatedPassenger = ocrInfo.passenger_name || "Alex Morgan";
+        const updatedStat = pkg.compensation?.statutory_amount_eur || 600.0;
+        const updatedRec = ocrInfo.incurred_expense_receipt_eur !== undefined ? ocrInfo.incurred_expense_receipt_eur : (pkg.compensation?.duty_of_care_expenses_eur || 65.0);
+        const updatedRoute = pkg.flight_info?.route || ocrInfo.route || "Frankfurt (FRA) ➔ New York (JFK)";
+        const updatedDate = ocrInfo.flight_date || pkg.flight_info?.flight_date || "2026-09-05";
 
         setClaimData({
           claimId: pkg.decision_id || `CLM-2026-OCR-${Date.now()}`,
@@ -248,7 +248,7 @@ ${passenger || '[PASSENGER NAME]'}`;
           pnr: updatedPnr,
           passengerName: updatedPassenger,
           passengerEmail: "",
-          delayDuration: pkg.flight_info?.delay_duration || claimData.delayDuration || "4h 15m",
+          delayDuration: pkg.flight_info?.delay_duration || "4h 15m",
           statutoryEur: updatedStat,
           receiptsEur: updatedRec,
           flightDate: updatedDate,
@@ -282,10 +282,10 @@ ${passenger || '[PASSENGER NAME]'}`;
       setUploadedImage(imageUrl);
       
       const fname = file.name.toUpperCase();
-      let carrier = claimData.carrier || "Lufthansa German Airlines";
-      let flightNum = claimData.flightNumber || "LH401";
-      let pnr = claimData.pnr || "PNR-LH992";
-      let passenger = claimData.passengerName || "Alex Morgan";
+      let carrier = "Lufthansa German Airlines";
+      let flightNum = "LH401";
+      let pnr = "PNR-LH992";
+      let passenger = "Alex Morgan";
 
       if (fname.includes("EWG") || fname.includes("EUROWINGS") || fname.includes("EW")) {
         carrier = "Eurowings";
@@ -303,10 +303,6 @@ ${passenger || '[PASSENGER NAME]'}`;
         carrier = "British Airways";
         flightNum = "BA117";
         pnr = "PNR-BA117";
-      } else if (fname.includes("DLH") || fname.includes("LUFTHANSA") || fname.includes("LH")) {
-        carrier = "Lufthansa German Airlines";
-        flightNum = "LH401";
-        pnr = "PNR-LH992";
       }
 
       const generatedOcrText = `PASSENGER NAME: ${passenger}\nFLIGHT CALLSIGN: ${flightNum}\nBOOKING PNR: ${pnr}\nAIRLINE: ${carrier}\nAIRPORT MEAL RECEIPT: EUR 65.00\nBOARDING PASS FILE: ${file.name}`;
