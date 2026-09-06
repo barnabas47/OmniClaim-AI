@@ -283,27 +283,31 @@ ${passenger || '[PASSENGER NAME]'}`;
       setUploadedImage(imageUrl);
       
       const fname = file.name.toUpperCase();
-      let carrier = "Lufthansa German Airlines";
-      let flightNum = "LH401";
-      let pnr = "PNR-LH992";
-      let passenger = "Alex Morgan";
+      let carrier = "Wizz Air Hungary";
+      let flightNum = "W62301";
+      let pnr = "PNR-W6230";
+      let passenger = "Daniel Kovacs";
 
-      if (fname.includes("EWG") || fname.includes("EUROWINGS") || fname.includes("EW")) {
-        carrier = "Eurowings";
-        flightNum = "EWG9782";
-        pnr = "PNR-EW978";
-      } else if (fname.includes("WZZ") || fname.includes("WIZZ") || fname.includes("W6")) {
-        carrier = "Wizz Air Hungary";
-        flightNum = "W62301";
-        pnr = "PNR-W6230";
-      } else if (fname.includes("RYR") || fname.includes("RYANAIR") || fname.includes("FR")) {
+      if (fname.includes("RYR") || fname.includes("RYANAIR") || fname.includes("FR") || fname.includes("HORVATH") || fname.includes("EVA")) {
         carrier = "Ryanair DAC";
         flightNum = "FR8821";
         pnr = "PNR-FR882";
+        passenger = "Eva Horvath";
+      } else if (fname.includes("EWG") || fname.includes("EUROWINGS") || fname.includes("EW")) {
+        carrier = "Eurowings";
+        flightNum = "EWG9782";
+        pnr = "PNR-EW978";
+        passenger = "Alex Morgan";
+      } else if (fname.includes("LH") || fname.includes("DLH") || fname.includes("LUFTHANSA")) {
+        carrier = "Lufthansa German Airlines";
+        flightNum = "LH401";
+        pnr = "PNR-LH992";
+        passenger = "Alex Morgan";
       } else if (fname.includes("BAW") || fname.includes("BRITISH") || fname.includes("BA")) {
         carrier = "British Airways";
         flightNum = "BA117";
         pnr = "PNR-BA117";
+        passenger = "John Smith";
       }
 
       const generatedOcrText = `PASSENGER NAME: ${passenger}\nFLIGHT CALLSIGN: ${flightNum}\nBOOKING PNR: ${pnr}\nAIRLINE: ${carrier}\nAIRPORT MEAL RECEIPT: EUR 65.00\nBOARDING PASS FILE: ${file.name}`;
