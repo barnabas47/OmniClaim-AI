@@ -137,7 +137,8 @@ class OmniClaimOrchestrator:
                 "carrier": fl["carrier"],
                 "route": f"{fl['origin_name']} ({fl['origin_iata']}) -> {fl['destination_name']} ({fl['destination_iata']})",
                 "delay_duration": f"{delay_mins // 60}h {delay_mins % 60}m",
-                "airline_excuse": fl["airline_claim_reason"]
+                "airline_excuse": fl["airline_claim_reason"],
+                "flight_date": flight_date
             },
             "disproval_evidence": {
                 "verdict": bluff_data["verdict"],
