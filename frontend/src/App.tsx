@@ -217,6 +217,7 @@ ${passenger || '[PASSENGER NAME]'}`;
 
   const parseDocumentWithText = async (textToParse: string, filename?: string) => {
     setIsParsing(true);
+    setSubmittedSuccess(false);
     try {
       const response = await fetch('/api/pipeline/upload-document', {
         method: 'POST',
@@ -325,6 +326,7 @@ ${passenger || '[PASSENGER NAME]'}`;
   };
 
   const handleParseDocumentBackend = async () => {
+    setSubmittedSuccess(false);
     await parseDocumentWithText(ocrText);
     setActiveTab('claim');
   };
