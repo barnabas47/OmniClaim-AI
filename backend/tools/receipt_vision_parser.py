@@ -295,7 +295,10 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         "ticket", "details", "passenger", "name", "economy", "business", "first", 
         "class", "zone", "sequence", "pnr", "reference", "carrier", "system", 
         "image", "document", "status", "success", "error", "clause", "notice",
-        "lufthansa", "ryanair", "wizz", "easyjet", "swiss", "austrian", "iberia"
+        "lufthansa", "ryanair", "wizz", "easyjet", "swiss", "austrian", "iberia",
+        "png", "jpg", "jpeg", "pdf", "select", "file", "uploaded", "successfully",
+        "device", "preview", "choose", "browse", "drag", "drop", "upload",
+        "generate", "claim", "parse", "total", "amount", "number", "issuing"
     }
 
     def _is_valid_person_name(cand: str) -> bool:
@@ -517,7 +520,7 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
 def _local_windows_ocr(image_bytes: bytes) -> str:
     """
     Extracts raw text from image bytes using Windows Native OCR (winsdk.windows.media.ocr).
-    Multi-pass contrast & scaling enhancement for maximum accuracy on photos & screenshots.
+    Comprehensive 5-pass multi-region contrast & resolution scaling for screenshots & photos.
     Runs 100% offline on Windows 10/11 with zero external dependencies or API keys.
     """
     try:
@@ -552,22 +555,49 @@ def _local_windows_ocr(image_bytes: bytes) -> str:
             return result.text if result else ""
 
         async def _ocr_async():
-            orig = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGBA")
-            t1 = await _ocr_single(orig)
-            
-            # Pass 2: High Contrast & Upscale if text is short
-            if len((t1 or "").strip()) < 15:
-                w, h = orig.size
-                scale = max(1.0, 1600.0 / max(w, h, 1))
-                if scale != 1.0:
-                    scaled = orig.resize((int(w * scale), int(h * scale)), PIL.Image.Resampling.LANCZOS)
-                else:
-                    scaled = orig
-                enhanced = PIL.ImageEnhance.Contrast(scaled.convert("RGB")).enhance(1.8)
-                t2 = await _ocr_single(enhanced)
-                if len(t2.strip()) > len(t1.strip()):
-                    return t2
-            return t1
+            orig_img = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+            w, h = orig_img.size
+            passes = []
+
+            # Pass 1: Raw Full Image
+            p1 = await _ocr_single(orig_img)
+            if p1: passes.append(p1)
+
+            # Pass 2: High Contrast 3x Scaled Image
+            s2 = orig_img.resize((w * 3, h * 3), PIL.Image.Resampling.LANCZOS)
+            e2 = PIL.ImageEnhance.Contrast(s2.convert("RGB")).enhance(1.8)
+            p2 = await _ocr_single(e2)
+            if p2: passes.append(p2)
+
+            # Pass 3: Center Crop 60% Region (for embedded document previews)
+            c3 = orig_img.crop((int(w * 0.20), int(h * 0.20), int(w * 0.80), int(h * 0.80)))
+            s3 = c3.resize((c3.width * 3, c3.height * 3), PIL.Image.Resampling.LANCZOS)
+            e3 = PIL.ImageEnhance.Contrast(s3.convert("RGB")).enhance(2.0)
+            p3 = await _ocr_single(e3)
+            if p3: passes.append(p3)
+
+            # Pass 4: Inner Ticket Crop 40% Region (4x scaled, high sharpness)
+            c4 = orig_img.crop((int(w * 0.28), int(h * 0.35), int(w * 0.72), int(h * 0.68)))
+            s4 = c4.resize((c4.width * 4, c4.height * 4), PIL.Image.Resampling.LANCZOS)
+            e4 = PIL.ImageEnhance.Sharpness(s4.convert("RGB")).enhance(2.5)
+            e4 = PIL.ImageEnhance.Contrast(e4).enhance(2.0)
+            p4 = await _ocr_single(e4)
+            if p4: passes.append(p4)
+
+            # Pass 5: Monochromatic Threshold Binarization (5x scaled)
+            s5 = c4.resize((c4.width * 5, c4.height * 5), PIL.Image.Resampling.BICUBIC)
+            g5 = PIL.ImageOps.autocontrast(s5.convert("L"), cutoff=2)
+            b5 = g5.point(lambda x: 255 if x > 135 else 0, mode="1").convert("RGB")
+            p5 = await _ocr_single(b5)
+            if p5: passes.append(p5)
+
+            unique_lines = []
+            for p in passes:
+                for line in p.splitlines():
+                    s = line.strip()
+                    if s and s not in unique_lines:
+                        unique_lines.append(s)
+            return "\n".join(unique_lines)
 
         try:
             loop = asyncio.get_event_loop()
