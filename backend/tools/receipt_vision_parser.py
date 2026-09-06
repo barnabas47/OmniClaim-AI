@@ -288,37 +288,59 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         pnr_code = f"PNR-{pnr_match.group(1).upper()}"
 
     # 4. Passenger Name
+    INVALID_NAME_WORDS = {
+        "local", "windows", "native", "ocr", "aviation", "knowledge", "base", 
+        "parsed", "extracted", "confidence", "boarding", "flight", "gate", "seat", 
+        "from", "date", "airline", "airport", "terminal", "booking", "receipt", 
+        "ticket", "details", "passenger", "name", "economy", "business", "first", 
+        "class", "zone", "sequence", "pnr", "reference", "carrier", "system", 
+        "image", "document", "status", "success", "error", "clause", "notice",
+        "lufthansa", "ryanair", "wizz", "easyjet", "swiss", "austrian", "iberia"
+    }
+
+    def _is_valid_person_name(cand: str) -> bool:
+        if not cand or len(cand) < 4:
+            return False
+        words = [w.lower().strip(".,!?:;") for w in re.split(r"\s+", cand) if w.strip()]
+        if len(words) < 2:
+            return False
+        if any(w in INVALID_NAME_WORDS for w in words):
+            return False
+        return True
+
     passenger_name = ""
     # Check IATA ticket format SURNAME / FIRSTNAME MR/MRS
     iata_name_match = re.search(r"\b([A-Z]{2,20})\s*/\s*([A-Z]{2,20})(?:\s+(?:MR|MRS|MS|DR|PROF))?\b", document_text)
     if iata_name_match:
         last = iata_name_match.group(1).title()
         first = iata_name_match.group(2).title()
-        candidate_name = f"{first} {last}"
-        if not any(kw in candidate_name.lower() for kw in ["boarding", "flight", "gate", "seat", "from", "date", "airline", "airport", "terminal", "booking", "receipt", "ticket", "details", "passenger"]):
-            passenger_name = candidate_name
+        cand = f"{first} {last}"
+        if _is_valid_person_name(cand):
+            passenger_name = cand
 
     if not passenger_name:
         reverse_name_match = re.search(r"\b([A-Z]{2,15}),\s*([A-Z]{2,15})\b", document_text, re.IGNORECASE)
         if reverse_name_match:
             last = reverse_name_match.group(1).title()
             first = reverse_name_match.group(2).title()
-            passenger_name = f"{first} {last}"
+            cand = f"{first} {last}"
+            if _is_valid_person_name(cand):
+                passenger_name = cand
         else:
             name_match = re.search(r"(?:PASSENGER NAME|PASSENGER|FULL NAME|CUSTOMER|NAME)[\s:#]+([A-Za-z]+(?:[ \t]+[A-Za-z]+)+)", document_text, re.IGNORECASE)
             if name_match:
-                clean_name = name_match.group(1).strip()
-                if len(clean_name) > 3 and not any(kw in clean_name.lower() for kw in ["boarding", "flight", "gate", "seat", "from", "date"]):
-                    passenger_name = clean_name.title()
+                clean_name = name_match.group(1).strip().title()
+                if _is_valid_person_name(clean_name):
+                    passenger_name = clean_name
             else:
                 standalone_name = re.search(r"\b([A-Z][a-z]{2,15}\s+[A-Z][a-z]{2,15})\b", document_text)
                 if standalone_name:
                     cand = standalone_name.group(1).strip()
-                    if not any(kw in cand.lower() for kw in ["boarding", "flight", "gate", "seat", "from", "date", "airline", "airport", "terminal", "booking", "receipt"]):
+                    if _is_valid_person_name(cand):
                         passenger_name = cand
 
     # STRICT BLACKLIST: Filter out mock artifact strings from UI screenshots
-    if passenger_name.upper() in ["DANIEL KOVACS", "DANIEL KOVÁCS", "EVA HORVATH", "ALEX MORGAN"]:
+    if passenger_name.upper() in ["DANIEL KOVACS", "DANIEL KOVÁCS", "EVA HORVATH", "ALEX MORGAN", "LOCAL WINDOWS"]:
         passenger_name = ""
     if flight_number.upper() in ["W62301", "1,1623E1", "11623E1", "LH401", "BA117"]:
         flight_number = ""

@@ -755,22 +755,22 @@ ${passenger || '[PASSENGER NAME]'}`;
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px' }}>
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>AIRLINE</label>
-                      <input value={claimData.carrier} onChange={(e) => updateClaimField('carrier', e.target.value)} placeholder="e.g. Lufthansa German Airlines" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.carrier} onChange={(e) => updateClaimField('carrier', e.target.value)} placeholder="Airline Name" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>FLIGHT CALLSIGN</label>
-                      <input value={claimData.flightNumber} onChange={(e) => updateClaimField('flightNumber', e.target.value)} placeholder="e.g. LH401" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.flightNumber} onChange={(e) => updateClaimField('flightNumber', e.target.value)} placeholder="Flight Code" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>BOOKING PNR</label>
-                      <input value={claimData.pnr} onChange={(e) => updateClaimField('pnr', e.target.value)} placeholder="e.g. LH992" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.pnr} onChange={(e) => updateClaimField('pnr', e.target.value)} placeholder="Booking PNR" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
 
                     <div>
                       <label style={{ fontSize: '11px', color: '#94A3B8', display: 'block', marginBottom: '4px' }}>PASSENGER NAME</label>
-                      <input value={claimData.passengerName} onChange={(e) => updateClaimField('passengerName', e.target.value)} placeholder="e.g. Alex Morgan" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
+                      <input value={claimData.passengerName} onChange={(e) => updateClaimField('passengerName', e.target.value)} placeholder="Passenger Full Name" style={{ width: '100%', backgroundColor: '#1E293B', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '10px', color: '#38BDF8', fontSize: '13px', boxSizing: 'border-box' }} />
                     </div>
                   </div>
                 </div>
