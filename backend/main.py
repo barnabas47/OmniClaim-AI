@@ -64,11 +64,7 @@ def init_db(reset: bool = False):
     
     cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_flight_number_date ON eligible_flights(flight_number, flight_date)")
     
-    # Clean up any legacy hardcoded seed entries if present
-    try:
-        cursor.execute("DELETE FROM eligible_flights WHERE flight_date != date('now')")
-    except Exception as e:
-        logger.warning(f"Legacy seed purge warning: {e}")
+
 
     # Insert ONLY real 100% live OpenSky + NOAA telemetry stream
     live_flights = aggregate_and_deduplicate_live_telemetry()
