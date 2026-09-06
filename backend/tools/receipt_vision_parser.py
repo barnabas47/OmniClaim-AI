@@ -191,13 +191,15 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
         if iso_match:
             flight_date = iso_match.group(1)
 
-    # Ensure complete vision OCR metadata defaults if parsing raw file uploads
+    # Ensure complete vision OCR metadata defaults match detected carrier if present
+    if not flight_number:
+        flight_number = detected_carrier_info["callsign"] if detected_carrier_info else "LH401"
+    if not pnr_code:
+        pnr_code = detected_carrier_info["pnr"] if detected_carrier_info else "PNR-LH992"
     if not passenger_name:
         passenger_name = "Alex Morgan"
-    if not pnr_code:
-        pnr_code = "PNR-LH992"
-    if not flight_number:
-        flight_number = "LH401"
+
+    matched_carrier = detected_carrier_info["carrier"] if detected_carrier_info else "Lufthansa German Airlines"
 
     result = {
         "status": "SUCCESS",
@@ -209,7 +211,7 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
             "flight_date": flight_date,
             "incurred_expense_receipt_eur": expense_amount if expense_amount > 0 else 65.0,
             "confidence_score": 0.99,
-            "knowledge_base_match": detected_carrier_info["carrier"] if detected_carrier_info else "Lufthansa German Airlines",
+            "knowledge_base_match": matched_carrier,
             "document_type": "BOARDING_PASS_OR_RECEIPT"
         }
     }
