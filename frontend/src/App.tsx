@@ -233,23 +233,23 @@ ${passenger || '[PASSENGER NAME]'}`;
         const pkg = resData.decision_package || {};
         const ocrInfo = resData.extracted_ocr || {};
 
-        const updatedCarrier = ocrInfo.knowledge_base_match || pkg.flight_info?.carrier || "Lufthansa German Airlines";
-        const updatedFlight = ocrInfo.flight_number || pkg.flight_info?.flight_number || "LH401";
-        const updatedPnr = ocrInfo.pnr_code || "PNR-LH992";
-        const updatedPassenger = ocrInfo.passenger_name || "Alex Morgan";
-        const updatedStat = pkg.compensation?.statutory_amount_eur || 600.0;
-        const updatedRec = ocrInfo.incurred_expense_receipt_eur !== undefined ? ocrInfo.incurred_expense_receipt_eur : (pkg.compensation?.duty_of_care_expenses_eur || 65.0);
-        const updatedRoute = pkg.flight_info?.route || ocrInfo.route || "Frankfurt (FRA) ➔ New York (JFK)";
-        const updatedDate = ocrInfo.flight_date || pkg.flight_info?.flight_date || "2026-09-05";
+        const updatedCarrier = ocrInfo.knowledge_base_match || pkg.flight_info?.carrier || "";
+        const updatedFlight = ocrInfo.flight_number || pkg.flight_info?.flight_number || "";
+        const updatedPnr = ocrInfo.pnr_code || "";
+        const updatedPassenger = ocrInfo.passenger_name || "";
+        const updatedStat = pkg.compensation?.statutory_amount_eur || 0;
+        const updatedRec = ocrInfo.incurred_expense_receipt_eur !== undefined ? ocrInfo.incurred_expense_receipt_eur : (pkg.compensation?.duty_of_care_expenses_eur || 0);
+        const updatedRoute = pkg.flight_info?.route || ocrInfo.route || "";
+        const updatedDate = ocrInfo.flight_date || pkg.flight_info?.flight_date || "";
 
         setClaimData({
-          claimId: pkg.decision_id || `CLM-2026-OCR-${Date.now()}`,
+          claimId: pkg.decision_id || `CLM-OCR-${Date.now()}`,
           carrier: updatedCarrier,
           flightNumber: updatedFlight,
           pnr: updatedPnr,
           passengerName: updatedPassenger,
           passengerEmail: "",
-          delayDuration: pkg.flight_info?.delay_duration || "4h 15m",
+          delayDuration: pkg.flight_info?.delay_duration || "",
           statutoryEur: updatedStat,
           receiptsEur: updatedRec,
           flightDate: updatedDate,
@@ -276,56 +276,87 @@ ${passenger || '[PASSENGER NAME]'}`;
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setUploadedImage(imageUrl);
-      
-      const fname = file.name.toUpperCase();
-      let carrier = "Wizz Air Hungary";
-      let flightNum = "W62301";
-      let pnr = "PNR-W6230";
-      let passenger = "Daniel Kovacs";
+    if (!file) return;
 
-      if (fname.includes("RYR") || fname.includes("RYANAIR") || fname.includes("FR") || fname.includes("HORVATH") || fname.includes("EVA")) {
-        carrier = "Ryanair DAC";
-        flightNum = "FR8821";
-        pnr = "PNR-FR882";
-        passenger = "Eva Horvath";
-      } else if (fname.includes("EWG") || fname.includes("EUROWINGS") || fname.includes("EW")) {
-        carrier = "Eurowings";
-        flightNum = "EWG9782";
-        pnr = "PNR-EW978";
-        passenger = "Alex Morgan";
-      } else if (fname.includes("LH") || fname.includes("DLH") || fname.includes("LUFTHANSA")) {
-        carrier = "Lufthansa German Airlines";
-        flightNum = "LH401";
-        pnr = "PNR-LH992";
-        passenger = "Alex Morgan";
-      } else if (fname.includes("BAW") || fname.includes("BRITISH") || fname.includes("BA")) {
-        carrier = "British Airways";
-        flightNum = "BA117";
-        pnr = "PNR-BA117";
-        passenger = "John Smith";
-      }
+    const imageUrl = URL.createObjectURL(file);
+    setUploadedImage(imageUrl);
+    setIsParsing(true);
+    setSubmittedSuccess(false);
 
-      const generatedOcrText = `PASSENGER NAME: ${passenger}\nFLIGHT CALLSIGN: ${flightNum}\nBOOKING PNR: ${pnr}\nAIRLINE: ${carrier}\nAIRPORT MEAL RECEIPT: EUR 65.00\nBOARDING PASS FILE: ${file.name}`;
+    try {
+      const isImage = file.type.startsWith('image/') || file.name.match(/\.(jpg|jpeg|png|webp|gif)$/i);
+      const isText = file.type.includes('text') || file.name.endsWith('.txt');
 
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const content = (evt.target?.result as string) || "";
-        const textToParse = content.length > 10 ? content : generatedOcrText;
-        setOcrText(textToParse);
-        parseDocumentWithText(textToParse, file.name);
-      };
+      if (isImage) {
+        const formData = new FormData();
+        formData.append('file', file);
 
-      if (file.type.includes('text') || file.name.endsWith('.txt')) {
+        const response = await fetch('/api/pipeline/upload-document-image', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          const pkg = resData.decision_package || {};
+          const ocrInfo = resData.extracted_ocr || {};
+
+          const updatedCarrier = ocrInfo.knowledge_base_match || pkg.flight_info?.carrier || '';
+          const updatedFlight = ocrInfo.flight_number || pkg.flight_info?.flight_number || '';
+          const updatedPnr = ocrInfo.pnr_code || '';
+          const updatedPassenger = ocrInfo.passenger_name || '';
+          const updatedStat = pkg.compensation?.statutory_amount_eur || 0;
+          const updatedRec = ocrInfo.incurred_expense_receipt_eur !== undefined ? ocrInfo.incurred_expense_receipt_eur : (pkg.compensation?.duty_of_care_expenses_eur || 0);
+          const updatedRoute = pkg.flight_info?.route || '';
+          const updatedDate = ocrInfo.flight_date || pkg.flight_info?.flight_date || '';
+
+          setClaimData({
+            claimId: pkg.decision_id || `CLM-OCR-${Date.now()}`,
+            carrier: updatedCarrier,
+            flightNumber: updatedFlight,
+            pnr: updatedPnr,
+            passengerName: updatedPassenger,
+            passengerEmail: '',
+            delayDuration: pkg.flight_info?.delay_duration || '',
+            statutoryEur: updatedStat,
+            receiptsEur: updatedRec,
+            flightDate: updatedDate,
+            route: updatedRoute
+          });
+
+          setLegalNotice(
+            generateLegalLetter(updatedCarrier, updatedFlight, updatedPnr, updatedPassenger, updatedStat, updatedRec, updatedRoute, updatedDate)
+          );
+
+          const parsedBy = ocrInfo.parsed_by || 'AI Vision';
+          const ocrTextPreview = [
+            updatedPassenger ? `PASSENGER: ${updatedPassenger}` : '',
+            updatedFlight ? `FLIGHT: ${updatedFlight}` : '',
+            updatedPnr ? `PNR: ${updatedPnr}` : '',
+            updatedDate ? `DATE: ${updatedDate}` : '',
+            updatedRec > 0 ? `EXPENSE: EUR ${updatedRec.toFixed(2)}` : '',
+            `[Parsed by ${parsedBy}]`,
+          ].filter(Boolean).join('\n');
+          setOcrText(ocrTextPreview || `[${parsedBy}: No text or metadata extracted from image]`);
+        }
+      } else if (isText) {
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          const textContent = (evt.target?.result as string) || '';
+          setOcrText(textContent);
+          await parseDocumentWithText(textContent, file.name);
+        };
         reader.readAsText(file);
       } else {
-        setOcrText(generatedOcrText);
-        parseDocumentWithText(generatedOcrText, file.name);
+        setOcrText(`[File uploaded: ${file.name}]`);
       }
+    } catch (err) {
+      console.error('File upload error:', err);
+      setOcrText(`[Upload error: ${err}]`);
+    } finally {
+      setIsParsing(false);
     }
   };
 
