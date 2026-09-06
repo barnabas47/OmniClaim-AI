@@ -331,7 +331,8 @@ ${passenger || '[PASSENGER NAME]'}`;
           );
 
           const parsedBy = ocrInfo.parsed_by || 'AI Vision';
-          const ocrTextPreview = [
+          const summaryParts = [
+            updatedCarrier ? `AIRLINE: ${updatedCarrier}` : '',
             updatedPassenger ? `PASSENGER: ${updatedPassenger}` : '',
             updatedFlight ? `FLIGHT: ${updatedFlight}` : '',
             updatedPnr ? `PNR: ${updatedPnr}` : '',
@@ -339,7 +340,8 @@ ${passenger || '[PASSENGER NAME]'}`;
             updatedRec > 0 ? `EXPENSE: EUR ${updatedRec.toFixed(2)}` : '',
             `[Parsed by ${parsedBy}]`,
           ].filter(Boolean).join('\n');
-          setOcrText(ocrTextPreview || `[${parsedBy}: No text or metadata extracted from image]`);
+          
+          setOcrText(ocrInfo.raw_text ? `${summaryParts}\n\n--- RAW EXTRACTED TEXT ---\n${ocrInfo.raw_text}` : summaryParts);
         }
       } else if (isText) {
         const reader = new FileReader();
@@ -362,7 +364,14 @@ ${passenger || '[PASSENGER NAME]'}`;
 
   const handleParseDocumentBackend = async () => {
     setSubmittedSuccess(false);
-    await parseDocumentWithText(ocrText);
+    // If claimData is ALREADY populated from image upload, preserve it and navigate directly to Active Claim tab!
+    if (claimData.carrier || claimData.flightNumber || claimData.passengerName || claimData.pnr) {
+      setActiveTab('claim');
+      return;
+    }
+    if (ocrText && ocrText.trim() && !ocrText.includes('[Parsed by')) {
+      await parseDocumentWithText(ocrText);
+    }
     setActiveTab('claim');
   };
 

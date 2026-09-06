@@ -460,6 +460,7 @@ def _merge_ai_result_with_knowledge_base(ai_result: Dict, document_text: str, fi
         "destination_iata": ai_result.get("destination_iata") or "",
         "seat": ai_result.get("seat") or "",
         "detected_carrier_info": detected_carrier_info,
+        "raw_text": document_text
     }
 
 
@@ -483,7 +484,8 @@ def _build_result(extracted: Dict, filename: str, ai_powered: bool) -> str:
             "origin_iata": extracted.get("origin_iata", ""),
             "destination_iata": extracted.get("destination_iata", ""),
             "seat": extracted.get("seat", ""),
-            "parsed_by": extracted.get("parsed_by", "AWS Bedrock Claude Vision" if ai_powered else "Local Windows Native OCR + Aviation Knowledge Base")
+            "parsed_by": extracted.get("parsed_by", "AWS Bedrock Claude Vision" if ai_powered else "Local Windows Native OCR + Aviation Knowledge Base"),
+            "raw_text": extracted.get("raw_text", "")
         }
     }
     return json.dumps(result, indent=2)
