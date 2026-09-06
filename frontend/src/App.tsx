@@ -232,17 +232,17 @@ ${passenger || '[PASSENGER NAME]'}`;
         const pkg = resData.decision_package || {};
         const ocrInfo = resData.extracted_ocr || {};
 
-        const updatedCarrier = pkg.flight_info?.carrier || ocrInfo.knowledge_base_match || "";
-        const updatedFlight = pkg.flight_info?.flight_number || ocrInfo.flight_number || "";
-        const updatedPnr = pkg.pnr_code || ocrInfo.pnr_code || "";
-        const updatedPassenger = pkg.passenger_name || ocrInfo.passenger_name || "";
+        const updatedCarrier = ocrInfo.knowledge_base_match || pkg.flight_info?.carrier || "";
+        const updatedFlight = ocrInfo.flight_number || pkg.flight_info?.flight_number || "";
+        const updatedPnr = ocrInfo.pnr_code !== undefined ? ocrInfo.pnr_code : "";
+        const updatedPassenger = ocrInfo.passenger_name !== undefined ? ocrInfo.passenger_name : "";
         const updatedStat = pkg.compensation?.statutory_amount_eur || 600.0;
-        const updatedRec = pkg.compensation?.duty_of_care_expenses_eur || ocrInfo.incurred_expense_receipt_eur || 0.0;
+        const updatedRec = ocrInfo.incurred_expense_receipt_eur || pkg.compensation?.duty_of_care_expenses_eur || 0.0;
         const updatedRoute = pkg.flight_info?.route || "";
         const updatedDate = new Date().toISOString().split('T')[0];
 
         setClaimData({
-          claimId: pkg.decision_id || "CLM-2026-CUSTOM",
+          claimId: pkg.decision_id || `CLM-2026-OCR-${Date.now()}`,
           carrier: updatedCarrier,
           flightNumber: updatedFlight,
           pnr: updatedPnr,
@@ -450,9 +450,9 @@ ${passenger || '[PASSENGER NAME]'}`;
         {/* Animated Sliding Tab Bar - Ultra-compact on mobile */}
         <div style={{ display: 'inline-flex', gap: '6px', backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.12)', position: 'relative', width: '100%', maxWidth: '640px', justifyContent: 'space-between', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
           {[
-            { id: 'database', label: 'Eligible Flights', shortLabel: 'Flights', icon: Database, count: eligibleFlights.length },
-            { id: 'claim', label: 'Active Claim & Notice', shortLabel: 'Claim', icon: FileText },
-            { id: 'ocr', label: 'Upload Boarding Pass', shortLabel: 'Upload Pass', icon: Scan }
+            { id: 'database', label: 'Eligible Flights', icon: Database, count: eligibleFlights.length },
+            { id: 'claim', label: 'Active Claim & Notice', icon: FileText },
+            { id: 'ocr', label: 'Upload Boarding Pass', icon: Scan }
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -487,8 +487,7 @@ ${passenger || '[PASSENGER NAME]'}`;
                   />
                 )}
                 <Icon size={14} color={isActive ? '#FFFFFF' : '#94A3B8'} />
-                <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">{tab.shortLabel}</span>
+                <span style={{ fontSize: '12px', fontWeight: '800', whiteSpace: 'nowrap' }}>{tab.label}</span>
                 {tab.count !== undefined && (
                   <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '8px', backgroundColor: isActive ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', fontWeight: '800' }}>
                     {tab.count}
