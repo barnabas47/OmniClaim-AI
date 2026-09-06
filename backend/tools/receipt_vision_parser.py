@@ -495,20 +495,22 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
 def _local_windows_ocr(image_bytes: bytes) -> str:
     """
     Extracts raw text from image bytes using Windows Native OCR (winsdk.windows.media.ocr).
+    Multi-pass contrast & scaling enhancement for maximum accuracy on photos & screenshots.
     Runs 100% offline on Windows 10/11 with zero external dependencies or API keys.
     """
     try:
         import io
         import asyncio
         import PIL.Image
+        import PIL.ImageEnhance
+        import PIL.ImageOps
         import winsdk.windows.media.ocr as ocr
         import winsdk.windows.graphics.imaging as img_mod
         import winsdk.windows.storage.streams as streams
 
-        async def _ocr_async():
-            image = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+        async def _ocr_single(pil_img):
             buf = io.BytesIO()
-            image.save(buf, format="PNG")
+            pil_img.save(buf, format="PNG")
             stream = streams.InMemoryRandomAccessStream()
             writer = streams.DataWriter(stream)
             writer.write_bytes(buf.getvalue())
@@ -526,6 +528,24 @@ def _local_windows_ocr(image_bytes: bytes) -> str:
                 return ""
             result = await engine.recognize_async(software_bitmap)
             return result.text if result else ""
+
+        async def _ocr_async():
+            orig = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+            t1 = await _ocr_single(orig)
+            
+            # Pass 2: High Contrast & Upscale if text is short
+            if len((t1 or "").strip()) < 15:
+                w, h = orig.size
+                scale = max(1.0, 1600.0 / max(w, h, 1))
+                if scale != 1.0:
+                    scaled = orig.resize((int(w * scale), int(h * scale)), PIL.Image.Resampling.LANCZOS)
+                else:
+                    scaled = orig
+                enhanced = PIL.ImageEnhance.Contrast(scaled.convert("RGB")).enhance(1.8)
+                t2 = await _ocr_single(enhanced)
+                if len(t2.strip()) > len(t1.strip()):
+                    return t2
+            return t1
 
         try:
             loop = asyncio.get_event_loop()
