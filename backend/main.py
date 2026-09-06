@@ -154,10 +154,10 @@ def upload_document(req: DocumentUploadRequest):
     except Exception:
         parsed_info = {}
 
-    flight_number = parsed_info.get("flight_number") or "LH401"
-    passenger_name = parsed_info.get("passenger_name") or "Alex Morgan"
-    pnr_code = parsed_info.get("pnr_code") or "PNR-LH992"
-    receipts_amount_eur = float(parsed_info.get("incurred_expense_receipt_eur") or 65.0)
+    flight_number = parsed_info.get("flight_number") or ""
+    passenger_name = parsed_info.get("passenger_name") or ""
+    pnr_code = parsed_info.get("pnr_code") or ""
+    receipts_amount_eur = float(parsed_info.get("incurred_expense_receipt_eur") or 0.0)
 
     flight_date = parsed_info.get("flight_date")
     if not flight_date and flight_number:
@@ -188,21 +188,21 @@ def upload_document(req: DocumentUploadRequest):
     decision_pkg = res.get("decision_package")
     if not decision_pkg:
         decision_pkg = {
-            "decision_id": f"CLM-{flight_number}-{int(time.time())}",
+            "decision_id": f"CLM-{flight_number or 'OCR'}-{int(time.time())}",
             "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
             "passenger_name": passenger_name,
             "pnr_code": pnr_code,
             "flight_info": {
                 "flight_number": flight_number,
-                "carrier": parsed_info.get("knowledge_base_match", "Lufthansa German Airlines"),
-                "route": "Frankfurt (FRA) -> New York (JFK)",
-                "delay_duration": "4h 15m",
-                "airline_excuse": "Weather Bluff Disproved via NOAA METAR",
+                "carrier": parsed_info.get("knowledge_base_match", ""),
+                "route": "",
+                "delay_duration": "",
+                "airline_excuse": "",
                 "flight_date": flight_date
             },
             "compensation": {
-                "amount_eur": 600.0,
-                "statutory_amount_eur": 600.0,
+                "amount_eur": receipts_amount_eur,
+                "statutory_amount_eur": 0.0,
                 "duty_of_care_expenses_eur": receipts_amount_eur
             }
         }
