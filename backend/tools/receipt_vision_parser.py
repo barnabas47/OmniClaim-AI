@@ -171,6 +171,12 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
             clean_name = name_match.group(1).strip()
             if len(clean_name) > 3 and not any(kw in clean_name.lower() for kw in ["boarding", "flight", "gate", "seat", "from", "date"]):
                 passenger_name = clean_name.title()
+        else:
+            standalone_name = re.search(r"\b([A-Z][a-z]{2,15}\s+[A-Z][a-z]{2,15})\b", document_text)
+            if standalone_name:
+                cand = standalone_name.group(1).strip()
+                if not any(kw in cand.lower() for kw in ["boarding", "flight", "gate", "seat", "from", "date", "airline", "airport", "terminal", "booking", "receipt"]):
+                    passenger_name = cand
 
     # 4. Domain Knowledge Match: Extract Duty of Care Expense Amounts
     expense_amount = 0.0
