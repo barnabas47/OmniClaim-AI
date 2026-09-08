@@ -4,6 +4,7 @@ set -e
 
 echo "=== OmniClaim AI: Installing Backend Dependencies ==="
 python -m pip install --upgrade pip
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 pip install -r backend/requirements.txt
 
 echo "=== OmniClaim AI: Building Frontend Assets ==="

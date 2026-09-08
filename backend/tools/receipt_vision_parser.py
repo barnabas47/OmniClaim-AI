@@ -114,6 +114,81 @@ Return ONLY a valid JSON object with these fields (use null if not found):
 }"""
 
 
+def _try_gemini_vision_parse(image_bytes: bytes, media_type: str = "image/jpeg") -> Optional[Dict]:
+    """
+    Attempts to parse a boarding pass / receipt image using Google Gemini multimodal vision.
+    Works with GEMINI_API_KEY or GOOGLE_API_KEY environment variable.
+    """
+    try:
+        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
+            return None
+
+        import google.generativeai as genai
+        import json as _json
+
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        prompt = _BEDROCK_AI_SYSTEM_PROMPT + "\n\nExtract all flight and passenger information from this boarding pass or ticket or receipt image. Return ONLY valid JSON."
+        
+        response = model.generate_content([
+            {"mime_type": media_type or "image/jpeg", "data": image_bytes},
+            prompt
+        ])
+        
+        raw_text = (response.text or "").strip()
+        json_match = re.search(r'\{[\s\S]*\}', raw_text)
+        if json_match:
+            parsed = _json.loads(json_match.group(0))
+            logger.info(f"Gemini vision parse SUCCESS: {parsed}")
+            return parsed
+    except Exception as e:
+        logger.warning(f"Gemini vision parse failed: {e}")
+    return None
+
+
+def _try_openai_vision_parse(image_bytes: bytes, media_type: str = "image/jpeg") -> Optional[Dict]:
+    """
+    Attempts to parse a boarding pass / receipt image using OpenAI GPT-4o-mini Vision.
+    Works with OPENAI_API_KEY environment variable.
+    """
+    try:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            return None
+
+        import openai
+        import json as _json
+
+        client = openai.OpenAI(api_key=api_key)
+        image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        data_url = f"data:{media_type or 'image/jpeg'};base64,{image_b64}"
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": _BEDROCK_AI_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Extract all flight and passenger information from this document. Return ONLY a JSON object."},
+                        {"type": "image_url", "image_url": {"url": data_url}}
+                    ]
+                }
+            ],
+            response_format={"type": "json_object"},
+            max_tokens=1000
+        )
+        raw_text = response.choices[0].message.content.strip()
+        parsed = _json.loads(raw_text)
+        logger.info(f"OpenAI vision parse SUCCESS: {parsed}")
+        return parsed
+    except Exception as e:
+        logger.warning(f"OpenAI vision parse failed: {e}")
+    return None
+
+
 def _try_bedrock_vision_parse(image_bytes: bytes, media_type: str = "image/jpeg") -> Optional[Dict]:
     """
     Attempts to parse a boarding pass / receipt image using AWS Bedrock Claude multimodal vision.
@@ -840,7 +915,8 @@ def _local_windows_ocr(image_bytes: bytes) -> str:
 def parse_image_boarding_pass(image_bytes_b64: str, filename: Optional[str] = "boarding_pass.jpg", media_type: Optional[str] = "image/jpeg") -> str:
     """
     Multimodal Vision AI parser that processes actual image files (JPEG, PNG, PDF preview)
-    of boarding passes and receipts using AWS Bedrock Claude Vision, with EasyOCR + Windows OCR fallback.
+    of boarding passes and receipts using Gemini Vision, OpenAI GPT-4o Vision, Bedrock Claude Vision, 
+    with EasyOCR + Windows OCR fallback.
 
     Args:
         image_bytes_b64: Base64-encoded image bytes.
@@ -858,44 +934,56 @@ def parse_image_boarding_pass(image_bytes_b64: str, filename: Optional[str] = "b
         logger.error(f"Failed to decode base64 image: {e}")
         return json.dumps({"status": "ERROR", "error": "Invalid base64 image data"})
 
-    # 1. Try AWS Bedrock Claude Vision (best quality, requires AWS creds)
-    ai_result = _try_bedrock_vision_parse(image_bytes, media_type or "image/jpeg")
-    ai_powered = False
+    # 1. Try Google Gemini Multimodal Vision (fastest, high accuracy)
+    ai_result = _try_gemini_vision_parse(image_bytes, media_type or "image/jpeg")
+    ai_engine = "Google Gemini Vision"
+
+    # 2. Try OpenAI GPT-4o-mini Vision
+    if not ai_result:
+        ai_result = _try_openai_vision_parse(image_bytes, media_type or "image/jpeg")
+        ai_engine = "OpenAI GPT-4o Vision"
+
+    # 3. Try AWS Bedrock Claude Vision
+    if not ai_result:
+        ai_result = _try_bedrock_vision_parse(image_bytes, media_type or "image/jpeg")
+        ai_engine = "AWS Bedrock Claude Vision"
 
     if ai_result:
-        ai_powered = True
         extracted = _merge_ai_result_with_knowledge_base(ai_result, "", filename or "")
+        extracted["parsed_by"] = ai_engine
+        return _build_result(extracted, filename or "boarding_pass.jpg", True)
+
+    # 4. Try EasyOCR (deep learning — runs locally/on server, reads angled, photographed documents)
+    logger.info("Cloud Vision APIs unavailable. Trying EasyOCR (deep learning)...")
+    ocr_text = _try_easyocr_extract(image_bytes)
+    ocr_engine = "EasyOCR Deep Learning"
+
+    if not ocr_text or len(ocr_text.strip()) < 10:
+        # 5. Fall back to Windows Native OCR
+        logger.info("EasyOCR returned little/nothing. Falling back to Windows Native OCR...")
+        ocr_text = _local_windows_ocr(image_bytes)
+        ocr_engine = "Windows Native OCR"
+
+    logger.info(f"{ocr_engine} extracted {len(ocr_text)} characters:\n{ocr_text[:400]}")
+
+    if ocr_text and ocr_text.strip():
+        extracted = _regex_fallback_parse(ocr_text, filename or "")
+        extracted["parsed_by"] = f"{ocr_engine} + Aviation Knowledge Base"
     else:
-        # 2. Try EasyOCR (deep learning — reads angled, photographed documents)
-        logger.info("Bedrock unavailable. Trying EasyOCR (deep learning)...")
-        ocr_text = _try_easyocr_extract(image_bytes)
-        ocr_engine = "EasyOCR Deep Learning"
+        extracted = {
+            "passenger_name": "",
+            "flight_number": "",
+            "pnr_code": "",
+            "flight_date": "",
+            "expense_amount_eur": 0.0,
+            "document_type": "BOARDING_PASS",
+            "origin_iata": "",
+            "destination_iata": "",
+            "seat": "",
+            "detected_carrier_info": None,
+            "parsed_by": "No OCR engine available",
+        }
 
-        if not ocr_text or len(ocr_text.strip()) < 10:
-            # 3. Fall back to Windows Native OCR
-            logger.info("EasyOCR returned little/nothing. Falling back to Windows Native OCR...")
-            ocr_text = _local_windows_ocr(image_bytes)
-            ocr_engine = "Windows Native OCR"
+    return _build_result(extracted, filename or "boarding_pass.jpg", False)
 
-        logger.info(f"{ocr_engine} extracted {len(ocr_text)} characters:\n{ocr_text[:400]}")
-
-        if ocr_text and ocr_text.strip():
-            extracted = _regex_fallback_parse(ocr_text, filename or "")
-            extracted["parsed_by"] = f"{ocr_engine} + Aviation Knowledge Base"
-        else:
-            extracted = {
-                "passenger_name": "",
-                "flight_number": "",
-                "pnr_code": "",
-                "flight_date": "",
-                "expense_amount_eur": 0.0,
-                "document_type": "BOARDING_PASS",
-                "origin_iata": "",
-                "destination_iata": "",
-                "seat": "",
-                "detected_carrier_info": None,
-                "parsed_by": "No OCR engine available",
-            }
-
-    return _build_result(extracted, filename or "boarding_pass.jpg", ai_powered)
 
