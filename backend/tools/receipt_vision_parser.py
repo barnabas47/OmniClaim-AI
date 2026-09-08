@@ -249,6 +249,13 @@ def _try_bedrock_text_parse(document_text: str) -> Optional[Dict]:
     return None
 
 
+VALID_PREFIXES = {"LH", "BA", "AF", "KL", "FR", "W6", "LX", "OS", "IB", "EW", "U2", "EK", "QR", "TK", "DL", "AA", "UA", "LO", "SK", "AY", "TP", "A3", "VY", "DLH", "BAW", "AFR", "KLM", "RYR", "WZZ", "SWR", "AUA", "IBE", "EWG", "EJU", "UAE", "QTR", "THY", "DAL", "AAL", "UAL", "LOT", "SAS", "FIN", "TAP", "AEE", "VLG"}
+
+MONTH_MAP = {
+    "JAN": "01", "FEB": "02", "MAR": "03", "APR": "04", "MAY": "05", "JUN": "06",
+    "JUL": "07", "AUG": "08", "SEP": "09", "OCT": "10", "NOV": "11", "DEC": "12"
+}
+
 def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
     """
     Regex-based fallback parser when AI is unavailable.
@@ -272,20 +279,29 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
                 detected_carrier_info = info
                 break
 
-    # 2. Flight Number
+    # 2. Flight Number (using re.finditer across all matches)
     flight_number = ""
-    flight_match = re.search(r"\b([A-Z0-9]{2,3}\s*\d{3,4})\b", document_text, re.IGNORECASE)
-    if flight_match:
-        candidate = flight_match.group(1).replace(" ", "").upper()
-        if candidate[:2] in ["LH", "BA", "AF", "KL", "FR", "W6", "LX", "OS", "IB", "EW", "U2", "EK", "QR", "TK", "DL", "AA", "UA", "LO", "SK", "AY", "TP", "A3", "VY"] or \
-           candidate[:3] in ["DLH", "BAW", "AFR", "KLM", "RYR", "WZZ", "SWR", "AUA", "IBE", "EWG", "EJU", "UAE", "QTR", "THY", "DAL", "AAL", "UAL", "LOT", "SAS", "FIN", "TAP", "AEE", "VLG"]:
+    for m in re.finditer(r"\b([A-Z0-9]{2,3}\s*[-#]?\s*\d{3,4})\b", document_text, re.IGNORECASE):
+        candidate = m.group(1).replace(" ", "").replace("-", "").upper()
+        if any(candidate.startswith(pfx) for pfx in VALID_PREFIXES):
             flight_number = candidate
+            break
 
-    # 3. PNR Code
+    # 3. PNR Code (using re.finditer with strict separator & label checks)
     pnr_code = ""
-    pnr_match = re.search(r"(?:PNR|Booking Ref|Record Locator|Ref|Confirmation)[\s:#\(\)-]*(?:PNR-)?([A-Z0-9]{5,7})", document_text, re.IGNORECASE)
-    if pnr_match:
-        pnr_code = f"PNR-{pnr_match.group(1).upper()}"
+    pnr_pattern = r"(?:PNR|BOOKING|REFERENCE|RECORD|LOCATOR|CONFIRMATION|RESERVATION|REF)[\s:#\(\)-]+(?:PNR-)?([A-Z0-9]{5,7})\b"
+    for m in re.finditer(pnr_pattern, document_text, re.IGNORECASE):
+        cand = m.group(1).upper()
+        if cand not in ["REFERENCE", "BOOKING", "CONFIRMATION", "RESERVATION", "LOCATOR", "NUMBER", "DETAILS", "TICKET"]:
+            pnr_code = f"PNR-{cand}"
+            break
+            
+    if not pnr_code:
+        for m in re.finditer(r"\b([A-Z0-9]{6})\b", document_text):
+            cand = m.group(1).upper()
+            if not any(w in cand for w in ["SELECT", "UPLOAD", "LATEST", "PASSED", "TICKET", "FLIGHT", "NUMBER", "DATE", "AMOUNT"]):
+                pnr_code = f"PNR-{cand}"
+                break
 
     # 4. Passenger Name
     INVALID_NAME_WORDS = {
@@ -298,7 +314,7 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         "lufthansa", "ryanair", "wizz", "easyjet", "swiss", "austrian", "iberia",
         "png", "jpg", "jpeg", "pdf", "select", "file", "uploaded", "successfully",
         "device", "preview", "choose", "browse", "drag", "drop", "upload",
-        "generate", "claim", "parse", "total", "amount", "number", "issuing"
+        "generate", "claim", "parse", "total", "amount", "number", "issuing", "itinerary"
     }
 
     def _is_valid_person_name(cand: str) -> bool:
@@ -313,75 +329,60 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
 
     passenger_name = ""
     # Check IATA ticket format SURNAME / FIRSTNAME MR/MRS
-    iata_name_match = re.search(r"\b([A-Z]{2,20})\s*/\s*([A-Z]{2,20})(?:\s+(?:MR|MRS|MS|DR|PROF))?\b", document_text)
-    if iata_name_match:
-        last = iata_name_match.group(1).title()
-        first = iata_name_match.group(2).title()
+    for iata_match in re.finditer(r"\b([A-Z]{2,20})\s*/\s*([A-Z]{2,20})(?:\s+(?:MR|MRS|MS|DR|PROF))?\b", document_text):
+        last = iata_match.group(1).title()
+        first = iata_match.group(2).title()
         cand = f"{first} {last}"
         if _is_valid_person_name(cand):
             passenger_name = cand
+            break
 
     if not passenger_name:
-        reverse_name_match = re.search(r"\b([A-Z]{2,15}),\s*([A-Z]{2,15})\b", document_text, re.IGNORECASE)
-        if reverse_name_match:
+        for reverse_name_match in re.finditer(r"\b([A-Z]{2,15}),\s*([A-Z]{2,15})\b", document_text):
             last = reverse_name_match.group(1).title()
             first = reverse_name_match.group(2).title()
             cand = f"{first} {last}"
             if _is_valid_person_name(cand):
                 passenger_name = cand
-        else:
-            name_match = re.search(r"(?:PASSENGER NAME|PASSENGER|FULL NAME|CUSTOMER|NAME)[\s:#]+([A-Za-z]+(?:[ \t]+[A-Za-z]+)+)", document_text, re.IGNORECASE)
-            if name_match:
-                clean_name = name_match.group(1).strip().title()
-                if _is_valid_person_name(clean_name):
-                    passenger_name = clean_name
-            else:
-                standalone_name = re.search(r"\b([A-Z][a-z]{2,15}\s+[A-Z][a-z]{2,15})\b", document_text)
-                if standalone_name:
-                    cand = standalone_name.group(1).strip()
-                    if _is_valid_person_name(cand):
-                        passenger_name = cand
+                break
 
-    # STRICT BLACKLIST: Filter out mock artifact strings from UI screenshots
-    if passenger_name.upper() in ["DANIEL KOVACS", "DANIEL KOVÁCS", "EVA HORVATH", "ALEX MORGAN", "LOCAL WINDOWS"]:
-        passenger_name = ""
-    if flight_number.upper() in ["W62301", "1,1623E1", "11623E1", "LH401", "BA117"]:
-        flight_number = ""
-    if pnr_code.upper() in ["PNR-W6230", "PNR-W623E", "W6230", "W623E", "PNR-LH992"]:
-        pnr_code = ""
+    if not passenger_name:
+        for name_match in re.finditer(r"(?:PASSENGER NAME|PASSENGER|FULL NAME|CUSTOMER|NAME)[\s:#]+([A-Za-z]+(?:[ \t]+[A-Za-z]+)+)", document_text, re.IGNORECASE):
+            clean_name = name_match.group(1).strip().title()
+            if _is_valid_person_name(clean_name):
+                passenger_name = clean_name
+                break
 
     # 5. Expense Amount
     expense_amount = 0.0
-    expense_matches = re.findall(r"(?:Total|Amount|EUR|USD|GBP|€|\$|£)\s*:?\s*[\$€£]?\s*(\d+\.\d{2})", document_text, re.IGNORECASE)
+    expense_matches = re.findall(r"(?:Total|Amount|EUR|USD|GBP|€|\$|£)\s*:?\s*[\$€£]?\s*(\d+[.,]\d{2})", document_text, re.IGNORECASE)
     if expense_matches:
-        expense_amounts = [float(x) for x in expense_matches]
-        valid_expenses = [x for x in expense_amounts if 5.0 <= x <= 500.0]
+        expense_amounts = [float(x.replace(",", ".")) for x in expense_matches]
+        valid_expenses = [x for x in expense_amounts if 5.0 <= x <= 1500.0]
         if valid_expenses:
             expense_amount = max(valid_expenses)
 
     # 6. Flight Date
     flight_date = ""
-    date_match = re.search(r"(?:FLIGHT DATE|DATE)[\s:#]+(\d{4}-\d{2}-\d{2})", document_text, re.IGNORECASE)
-    if date_match:
-        flight_date = date_match.group(1)
-    else:
+    dmy_str_match = re.search(r"\b(\d{1,2})[\s/-]+([A-Za-z]{3})[\s/-]+(\d{2,4})\b", document_text)
+    if dmy_str_match:
+        day = int(dmy_str_match.group(1))
+        mon = dmy_str_match.group(2).upper()
+        yr = dmy_str_match.group(3)
+        if len(yr) == 2: yr = f"20{yr}"
+        if mon in MONTH_MAP:
+            flight_date = f"{yr}-{MONTH_MAP[mon]}-{day:02d}"
+
+    if not flight_date:
         iso_match = re.search(r"\b(202\d-\d{2}-\d{2})\b", document_text)
         if iso_match:
             flight_date = iso_match.group(1)
-        else:
-            dmy_match = re.search(r"\b(\d{1,2})[/ ]([A-Za-z]{3}|\d{1,2})[/ ](\d{4})\b", document_text)
-            if dmy_match:
-                try:
-                    from datetime import datetime
-                    raw = dmy_match.group(0).replace("/", " ")
-                    for fmt in ["%d %b %Y", "%d %m %Y"]:
-                        try:
-                            flight_date = datetime.strptime(raw, fmt).strftime("%Y-%m-%d")
-                            break
-                        except ValueError:
-                            pass
-                except Exception:
-                    pass
+
+    if not flight_date:
+        dmy_num_match = re.search(r"\b(\d{1,2})[/.](\d{1,2})[/.](\d{4})\b", document_text)
+        if dmy_num_match:
+            d, m, y = int(dmy_num_match.group(1)), int(dmy_num_match.group(2)), dmy_num_match.group(3)
+            flight_date = f"{y}-{m:02d}-{d:02d}"
 
     return {
         "passenger_name": passenger_name,
@@ -394,6 +395,7 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         "destination_iata": "",
         "seat": "",
         "detected_carrier_info": detected_carrier_info,
+        "raw_text": document_text
     }
 
 
@@ -561,33 +563,40 @@ def _local_windows_ocr(image_bytes: bytes) -> str:
             w, h = orig_img.size
             passes = []
 
+            def _scale_to_max(img, target_max=2400):
+                iw, ih = img.size
+                sc = max(1.0, float(target_max) / max(iw, ih, 1))
+                if sc != 1.0:
+                    return img.resize((int(iw * sc), int(ih * sc)), PIL.Image.Resampling.LANCZOS)
+                return img
+
             # Pass 1: Raw Full Image
             p1 = await _ocr_single(orig_img)
             if p1: passes.append(p1)
 
-            # Pass 2: High Contrast 3x Scaled Image
-            s2 = orig_img.resize((w * 3, h * 3), PIL.Image.Resampling.LANCZOS)
+            # Pass 2: High Contrast Scaled Full Image (Target 2400px max)
+            s2 = _scale_to_max(orig_img, 2400)
             e2 = PIL.ImageEnhance.Contrast(s2.convert("RGB")).enhance(1.8)
             p2 = await _ocr_single(e2)
             if p2: passes.append(p2)
 
-            # Pass 3: Center Crop 60% Region (for embedded document previews)
-            c3 = orig_img.crop((int(w * 0.20), int(h * 0.20), int(w * 0.80), int(h * 0.80)))
-            s3 = c3.resize((c3.width * 3, c3.height * 3), PIL.Image.Resampling.LANCZOS)
-            e3 = PIL.ImageEnhance.Contrast(s3.convert("RGB")).enhance(2.0)
+            # Pass 3: Top-Half Header Crop (for passenger names, flight numbers, PNR at top)
+            top_crop = orig_img.crop((0, 0, w, int(h * 0.55)))
+            s3 = _scale_to_max(top_crop, 2400)
+            e3 = PIL.ImageEnhance.Sharpness(s3.convert("RGB")).enhance(2.2)
+            e3 = PIL.ImageEnhance.Contrast(e3).enhance(1.8)
             p3 = await _ocr_single(e3)
             if p3: passes.append(p3)
 
-            # Pass 4: Inner Ticket Crop 40% Region (4x scaled, high sharpness)
-            c4 = orig_img.crop((int(w * 0.28), int(h * 0.35), int(w * 0.72), int(h * 0.68)))
-            s4 = c4.resize((c4.width * 4, c4.height * 4), PIL.Image.Resampling.LANCZOS)
-            e4 = PIL.ImageEnhance.Sharpness(s4.convert("RGB")).enhance(2.5)
-            e4 = PIL.ImageEnhance.Contrast(e4).enhance(2.0)
+            # Pass 4: Center Crop 60% Region (for embedded document previews)
+            c4 = orig_img.crop((int(w * 0.20), int(h * 0.20), int(w * 0.80), int(h * 0.80)))
+            s4 = _scale_to_max(c4, 2400)
+            e4 = PIL.ImageEnhance.Contrast(s4.convert("RGB")).enhance(2.0)
             p4 = await _ocr_single(e4)
             if p4: passes.append(p4)
 
-            # Pass 5: Monochromatic Threshold Binarization (5x scaled)
-            s5 = c4.resize((c4.width * 5, c4.height * 5), PIL.Image.Resampling.BICUBIC)
+            # Pass 5: Monochromatic Threshold Binarization
+            s5 = _scale_to_max(top_crop, 2400)
             g5 = PIL.ImageOps.autocontrast(s5.convert("L"), cutoff=2)
             b5 = g5.point(lambda x: 255 if x > 135 else 0, mode="1").convert("RGB")
             p5 = await _ocr_single(b5)

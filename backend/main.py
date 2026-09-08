@@ -173,16 +173,13 @@ def upload_document(req: DocumentUploadRequest):
         except Exception:
             pass
 
-    if not flight_date:
-        flight_date = time.strftime("%Y-%m-%d")
-
-    parsed_info["flight_date"] = flight_date
+    parsed_info["flight_date"] = flight_date or ""
 
     res = orchestrator.process_flight_compensation_pipeline(
         flight_number=flight_number,
         passenger_name=passenger_name,
         pnr_code=pnr_code,
-        flight_date=flight_date,
+        flight_date=flight_date or time.strftime("%Y-%m-%d"),
         receipts_amount_eur=receipts_amount_eur
     )
     
@@ -252,16 +249,13 @@ async def upload_document_image(file: UploadFile = File(...)):
         except Exception:
             pass
 
-    if not flight_date:
-        flight_date = time.strftime("%Y-%m-%d")
-
-    parsed_info["flight_date"] = flight_date
+    parsed_info["flight_date"] = flight_date or ""
 
     res = orchestrator.process_flight_compensation_pipeline(
         flight_number=flight_number,
         passenger_name=passenger_name,
         pnr_code=pnr_code,
-        flight_date=flight_date,
+        flight_date=flight_date or time.strftime("%Y-%m-%d"),
         receipts_amount_eur=receipts_amount_eur
     )
     
