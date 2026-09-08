@@ -330,7 +330,7 @@ ${passenger || '[PASSENGER NAME]'}`;
             generateLegalLetter(updatedCarrier, updatedFlight, updatedPnr, updatedPassenger, updatedStat, updatedRec, updatedRoute, updatedDate)
           );
 
-          const parsedBy = ocrInfo.parsed_by || 'AI Vision';
+          // Build clean summary text (no '[Parsed by...]' noise shown to user)
           const summaryParts = [
             updatedCarrier ? `AIRLINE: ${updatedCarrier}` : '',
             updatedPassenger ? `PASSENGER: ${updatedPassenger}` : '',
@@ -338,10 +338,13 @@ ${passenger || '[PASSENGER NAME]'}`;
             updatedPnr ? `PNR: ${updatedPnr}` : '',
             updatedDate ? `DATE: ${updatedDate}` : '',
             updatedRec > 0 ? `EXPENSE: EUR ${updatedRec.toFixed(2)}` : '',
-            `[Parsed by ${parsedBy}]`,
           ].filter(Boolean).join('\n');
           
-          setOcrText(ocrInfo.raw_text ? `${summaryParts}\n\n--- RAW EXTRACTED TEXT ---\n${ocrInfo.raw_text}` : summaryParts);
+          const rawText = ocrInfo.raw_text || '';
+          setOcrText(rawText ? `${summaryParts}\n\n--- RAW OCR TEXT ---\n${rawText}` : summaryParts);
+
+          // Auto-navigate to claim tab immediately after processing
+          setActiveTab('claim');
         }
       } else if (isText) {
         const reader = new FileReader();
@@ -349,6 +352,7 @@ ${passenger || '[PASSENGER NAME]'}`;
           const textContent = (evt.target?.result as string) || '';
           setOcrText(textContent);
           await parseDocumentWithText(textContent, file.name);
+          setActiveTab('claim');
         };
         reader.readAsText(file);
       } else {
@@ -829,53 +833,72 @@ ${passenger || '[PASSENGER NAME]'}`;
               transition={{ duration: 0.25 }}
               style={{ maxWidth: '650px', margin: '0 auto' }}
             >
-              <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', borderRadius: '22px', padding: '32px 20px', border: '2px dashed #0EA5E9', textAlign: 'center', marginBottom: '20px' }}>
-                <Upload size={44} color="#0EA5E9" style={{ margin: '0 auto 12px auto' }} />
-                <h2 style={{ fontSize: '18px', fontWeight: '800', margin: '0 0 6px 0', color: '#FFFFFF' }}>Upload Boarding Pass or Receipt File</h2>
-                <p style={{ fontSize: '13px', color: '#94A3B8', margin: '0 0 16px 0' }}>Select an image (JPG, PNG) or PDF document from your device</p>
+              {isParsing ? (
+                /* Large centered loading spinner while OCR is running */
+                <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.92)', borderRadius: '22px', padding: '64px 20px', border: '2px solid rgba(14, 165, 233, 0.4)', textAlign: 'center', marginBottom: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '320px' }}>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                    style={{ marginBottom: '24px' }}
+                  >
+                    <Loader2 size={72} color="#0EA5E9" />
+                  </motion.div>
+                  <h2 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 10px 0', color: '#FFFFFF' }}>Analysing Document...</h2>
+                  <p style={{ fontSize: '14px', color: '#94A3B8', margin: 0 }}>AI is reading your boarding pass and extracting flight data</p>
+                </div>
+              ) : (
+                <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)', borderRadius: '22px', padding: '32px 20px', border: '2px dashed #0EA5E9', textAlign: 'center', marginBottom: '20px' }}>
+                  <Upload size={44} color="#0EA5E9" style={{ margin: '0 auto 12px auto' }} />
+                  <h2 style={{ fontSize: '18px', fontWeight: '800', margin: '0 0 6px 0', color: '#FFFFFF' }}>Upload Boarding Pass or Receipt File</h2>
+                  <p style={{ fontSize: '13px', color: '#94A3B8', margin: '0 0 16px 0' }}>Select an image (JPG, PNG) or PDF document from your device</p>
 
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={handleFileUpload}
-                  style={{ display: 'none' }}
-                  id="mobile-file-upload-tab"
-                />
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileUpload}
+                    style={{ display: 'none' }}
+                    id="mobile-file-upload-tab"
+                  />
 
-                <label
-                  htmlFor="mobile-file-upload-tab"
-                  style={{ display: 'inline-block', padding: '12px 24px', background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', color: '#FFFFFF', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', fontSize: '13px', boxShadow: '0 4px 16px rgba(14, 165, 233, 0.3)' }}
-                >
-                  📁 Select File
-                </label>
+                  <label
+                    htmlFor="mobile-file-upload-tab"
+                    style={{ display: 'inline-block', padding: '12px 24px', background: 'linear-gradient(135deg, #0EA5E9, #0284C7)', color: '#FFFFFF', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', fontSize: '13px', boxShadow: '0 4px 16px rgba(14, 165, 233, 0.3)' }}
+                  >
+                    📁 Select File
+                  </label>
 
-                {uploadedImage && (
-                  <div style={{ marginTop: '18px' }}>
-                    <p style={{ fontSize: '12px', color: '#34D399', fontWeight: '800' }}>✓ File Uploaded Successfully!</p>
-                    <img src={uploadedImage} alt="Uploaded Pass" style={{ maxHeight: '160px', borderRadius: '12px', margin: '8px auto 0 auto', border: '1px solid rgba(255, 255, 255, 0.1)' }} />
-                  </div>
-                )}
-              </div>
+                  {uploadedImage && (
+                    <div style={{ marginTop: '18px' }}>
+                      <p style={{ fontSize: '12px', color: '#34D399', fontWeight: '800' }}>✓ File Uploaded Successfully!</p>
+                      <img src={uploadedImage} alt="Uploaded Pass" style={{ maxHeight: '160px', borderRadius: '12px', margin: '8px auto 0 auto', border: '1px solid rgba(255, 255, 255, 0.1)' }} />
+                    </div>
+                  )}
+                </div>
+              )}
 
-              <textarea
-                value={ocrText}
-                onChange={(e) => setOcrText(e.target.value)}
-                rows={5}
-                style={{ width: '100%', backgroundColor: 'rgba(15, 23, 42, 0.85)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', padding: '14px', color: '#38BDF8', fontFamily: 'monospace', fontSize: '12px', outline: 'none', boxSizing: 'border-box', marginBottom: '20px' }}
-              />
+              {!isParsing && (
+                <>
+                  <textarea
+                    value={ocrText}
+                    onChange={(e) => setOcrText(e.target.value)}
+                    placeholder="Extracted text will appear here, or paste boarding pass text manually..."
+                    rows={5}
+                    style={{ width: '100%', backgroundColor: 'rgba(15, 23, 42, 0.85)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', padding: '14px', color: '#38BDF8', fontFamily: 'monospace', fontSize: '12px', outline: 'none', boxSizing: 'border-box', marginBottom: '20px' }}
+                  />
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleParseDocumentBackend}
-                disabled={isParsing}
-                style={{ width: '100%', padding: '16px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, #0EA5E9, #6366F1)', color: '#FFFFFF', fontSize: '15px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 20px rgba(14, 165, 233, 0.4)' }}
-              >
-                {isParsing ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />} 
-                {isParsing ? "Processing via Strands AI Agents..." : "Parse Document & Generate Claim"}
-              </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleParseDocumentBackend}
+                    style={{ width: '100%', padding: '16px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, #0EA5E9, #6366F1)', color: '#FFFFFF', fontSize: '15px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 20px rgba(14, 165, 233, 0.4)' }}
+                  >
+                    <Sparkles size={18} /> Parse Document &amp; Go to Claim
+                  </motion.button>
+                </>
+              )}
             </motion.div>
           )}
+
 
         </AnimatePresence>
       </div>

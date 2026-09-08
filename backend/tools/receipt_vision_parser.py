@@ -526,20 +526,71 @@ def _local_windows_ocr(image_bytes: bytes) -> str:
     Extracts raw text from image bytes using Windows Native OCR (winsdk.windows.media.ocr).
     Comprehensive 5-pass multi-region contrast & resolution scaling for screenshots & photos.
     Runs 100% offline on Windows 10/11 with zero external dependencies or API keys.
+    Filters out OmniClaim app UI text that gets picked up when user uploads a screenshot.
     """
+    # Lines that are the app's own UI — these must be filtered from OCR results
+    APP_UI_LINES = {
+        "upload boarding pass or receipt file",
+        "select an image (jpg, png) or pdf document from your device",
+        "select file",
+        "file uploaded successfully!",
+        "parse document & generate claim",
+        "parse document",
+        "generate claim",
+        "review & edit details",
+        "passenger & flight info verification",
+        "active claim & notice",
+        "omniclaim ai",
+        "powered by strands ai agents",
+        "processing via strands ai agents",
+        "live eligible flights database",
+        "search flights",
+        "date",
+        "airline",
+        "flight callsign",
+        "booking pnr",
+        "passenger name",
+        "passenger email",
+        "delay duration",
+        "route",
+    }
+
+    def _should_keep_line(line: str) -> bool:
+        """Returns True if this line is NOT from app UI (i.e. it's real ticket content)."""
+        stripped = line.strip()
+        if not stripped or len(stripped) < 2:
+            return False
+        lower = stripped.lower()
+        # Exact matches to UI strings
+        if lower in APP_UI_LINES:
+            return False
+        # Partial match check for common UI fragments
+        ui_fragments = [
+            "upload boarding", "select an image", "select file",
+            "file uploaded", "parse document", "generate claim",
+            "parsed by local windows", "aviation knowledge base",
+            "parsed by", "omniclaim", "strands ai",
+            "review & edit", "active claim", "eligible flights",
+        ]
+        for frag in ui_fragments:
+            if frag in lower:
+                return False
+        return True
+
     try:
         import io
         import asyncio
         import PIL.Image
         import PIL.ImageEnhance
         import PIL.ImageOps
+        import PIL.ImageFilter
         import winsdk.windows.media.ocr as ocr
         import winsdk.windows.graphics.imaging as img_mod
         import winsdk.windows.storage.streams as streams
 
         async def _ocr_single(pil_img):
             buf = io.BytesIO()
-            pil_img.save(buf, format="PNG")
+            pil_img.convert("RGBA").save(buf, format="PNG")
             stream = streams.InMemoryRandomAccessStream()
             writer = streams.DataWriter(stream)
             writer.write_bytes(buf.getvalue())
@@ -559,56 +610,51 @@ def _local_windows_ocr(image_bytes: bytes) -> str:
             return result.text if result else ""
 
         async def _ocr_async():
-            orig_img = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+            orig_img = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGB")
             w, h = orig_img.size
-            passes = []
+            all_lines = []
 
-            def _scale_to_max(img, target_max=2400):
+            def _scale_to(img, target_max=3000):
                 iw, ih = img.size
                 sc = max(1.0, float(target_max) / max(iw, ih, 1))
                 if sc != 1.0:
                     return img.resize((int(iw * sc), int(ih * sc)), PIL.Image.Resampling.LANCZOS)
                 return img
 
-            # Pass 1: Raw Full Image
-            p1 = await _ocr_single(orig_img)
-            if p1: passes.append(p1)
+            def _enhance(img, contrast=2.0, sharpness=2.5, brightness=1.1):
+                img = PIL.ImageEnhance.Contrast(img).enhance(contrast)
+                img = PIL.ImageEnhance.Sharpness(img).enhance(sharpness)
+                img = PIL.ImageEnhance.Brightness(img).enhance(brightness)
+                return img
 
-            # Pass 2: High Contrast Scaled Full Image (Target 2400px max)
-            s2 = _scale_to_max(orig_img, 2400)
-            e2 = PIL.ImageEnhance.Contrast(s2.convert("RGB")).enhance(1.8)
-            p2 = await _ocr_single(e2)
-            if p2: passes.append(p2)
-
-            # Pass 3: Top-Half Header Crop (for passenger names, flight numbers, PNR at top)
-            top_crop = orig_img.crop((0, 0, w, int(h * 0.55)))
-            s3 = _scale_to_max(top_crop, 2400)
-            e3 = PIL.ImageEnhance.Sharpness(s3.convert("RGB")).enhance(2.2)
-            e3 = PIL.ImageEnhance.Contrast(e3).enhance(1.8)
-            p3 = await _ocr_single(e3)
-            if p3: passes.append(p3)
-
-            # Pass 4: Center Crop 60% Region (for embedded document previews)
-            c4 = orig_img.crop((int(w * 0.20), int(h * 0.20), int(w * 0.80), int(h * 0.80)))
-            s4 = _scale_to_max(c4, 2400)
-            e4 = PIL.ImageEnhance.Contrast(s4.convert("RGB")).enhance(2.0)
-            p4 = await _ocr_single(e4)
-            if p4: passes.append(p4)
-
-            # Pass 5: Monochromatic Threshold Binarization
-            s5 = _scale_to_max(top_crop, 2400)
-            g5 = PIL.ImageOps.autocontrast(s5.convert("L"), cutoff=2)
-            b5 = g5.point(lambda x: 255 if x > 135 else 0, mode="1").convert("RGB")
-            p5 = await _ocr_single(b5)
-            if p5: passes.append(p5)
-
-            unique_lines = []
-            for p in passes:
-                for line in p.splitlines():
+            def _collect(text):
+                for line in (text or "").splitlines():
                     s = line.strip()
-                    if s and s not in unique_lines:
-                        unique_lines.append(s)
-            return "\n".join(unique_lines)
+                    if _should_keep_line(s) and s not in all_lines:
+                        all_lines.append(s)
+
+            # Pass 1: Tight center crop (where ticket paper usually is in screenshots)
+            c1 = orig_img.crop((int(w * 0.27), int(h * 0.36), int(w * 0.73), int(h * 0.62)))
+            _collect(await _ocr_single(_enhance(_scale_to(c1, 3000))))
+
+            # Pass 2: Same tight crop but binarized
+            g2 = PIL.ImageOps.autocontrast(_scale_to(c1, 3000).convert("L"), cutoff=1)
+            b2 = g2.point(lambda x: 255 if x > 115 else 0, mode="1").convert("RGB")
+            _collect(await _ocr_single(b2))
+
+            # Pass 3: Wider ticket crop (more context)
+            c3 = orig_img.crop((int(w * 0.15), int(h * 0.32), int(w * 0.85), int(h * 0.65)))
+            _collect(await _ocr_single(_enhance(_scale_to(c3, 3000), contrast=2.5)))
+
+            # Pass 4: Top half of tight ticket crop (for header: passenger name, PNR, flight#)
+            c4 = orig_img.crop((int(w * 0.27), int(h * 0.36), int(w * 0.73), int(h * 0.49)))
+            _collect(await _ocr_single(_enhance(_scale_to(c4, 3000), contrast=3.0, sharpness=3.5)))
+
+            # Pass 5: Full image high contrast (catch any missed data not in ticket area)
+            s5 = _scale_to(orig_img, 2400)
+            _collect(await _ocr_single(_enhance(s5, contrast=1.5, sharpness=2.0)))
+
+            return "\n".join(all_lines)
 
         try:
             loop = asyncio.get_event_loop()
