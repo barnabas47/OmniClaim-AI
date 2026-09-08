@@ -263,6 +263,7 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
     """
     text_upper = (document_text or "").upper()
     file_upper = (filename or "").upper()
+    lines = (document_text or "").splitlines()
 
     # 1. Identify Airline Carrier
     detected_carrier_info = None
@@ -287,7 +288,7 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
             flight_number = candidate
             break
 
-    # 3. PNR Code (using re.finditer with strict separator & label checks)
+    # 3. PNR Code (strict separator & label checks)
     pnr_code = ""
     pnr_pattern = r"(?:PNR|BOOKING|REFERENCE|RECORD|LOCATOR|CONFIRMATION|RESERVATION|REF)[\s:#\(\)-]+(?:PNR-)?([A-Z0-9]{5,7})\b"
     for m in re.finditer(pnr_pattern, document_text, re.IGNORECASE):
@@ -295,27 +296,40 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         if cand not in ["REFERENCE", "BOOKING", "CONFIRMATION", "RESERVATION", "LOCATOR", "NUMBER", "DETAILS", "TICKET"]:
             pnr_code = f"PNR-{cand}"
             break
-            
+
     if not pnr_code:
-        for m in re.finditer(r"\b([A-Z0-9]{6})\b", document_text):
+        # 6-char alphanumeric fallback — MUST contain at least one digit (pure-alpha = a name, not a PNR)
+        for m in re.finditer(r"\b([A-Z][A-Z0-9]{4}[A-Z0-9])\b", document_text):
             cand = m.group(1).upper()
-            if not any(w in cand for w in ["SELECT", "UPLOAD", "LATEST", "PASSED", "TICKET", "FLIGHT", "NUMBER", "DATE", "AMOUNT"]):
-                pnr_code = f"PNR-{cand}"
-                break
+            # Must have at least one digit character
+            if not re.search(r"\d", cand):
+                continue
+            # Skip known non-PNR tokens
+            skip_words = {"SELECT", "UPLOAD", "LATEST", "PASSED", "TICKET", "FLIGHT", "NUMBER",
+                          "DATE", "AMOUNT", "PAYMENT", "METHOD", "ECONOMY", "BUSINESS", "BAGGAGE"}
+            if cand in skip_words:
+                continue
+            pnr_code = f"PNR-{cand}"
+            break
 
     # 4. Passenger Name
     INVALID_NAME_WORDS = {
-        "local", "windows", "native", "ocr", "aviation", "knowledge", "base", 
-        "parsed", "extracted", "confidence", "boarding", "flight", "gate", "seat", 
-        "from", "date", "airline", "airport", "terminal", "booking", "receipt", 
-        "ticket", "details", "passenger", "name", "economy", "business", "first", 
-        "class", "zone", "sequence", "pnr", "reference", "carrier", "system", 
+        "local", "windows", "native", "ocr", "aviation", "knowledge", "base",
+        "parsed", "extracted", "confidence", "boarding", "flight", "gate", "seat",
+        "from", "date", "airline", "airport", "terminal", "booking", "receipt",
+        "ticket", "details", "passenger", "name", "economy", "business", "first",
+        "class", "zone", "sequence", "pnr", "reference", "carrier", "system",
         "image", "document", "status", "success", "error", "clause", "notice",
         "lufthansa", "ryanair", "wizz", "easyjet", "swiss", "austrian", "iberia",
         "png", "jpg", "jpeg", "pdf", "select", "file", "uploaded", "successfully",
         "device", "preview", "choose", "browse", "drag", "drop", "upload",
-        "generate", "claim", "parse", "total", "amount", "number", "issuing", "itinerary"
+        "generate", "claim", "parse", "total", "amount", "number", "issuing", "itinerary",
+        "summary", "receipt", "electronic", "deutsche", "times", "payment", "card",
+        "digits", "fare", "last", "method", "dep", "arr", "ipc", "t1", "t2b",
     }
+    AIRLINE_NAMES = {"lufthansa", "ryanair", "wizz", "easyjet", "swiss", "austrian",
+                     "iberia", "british", "airways", "klm", "emirates", "qatar", "turkish",
+                     "delta", "american", "united", "lot", "finnair", "tap", "aegean", "vueling"}
 
     def _is_valid_person_name(cand: str) -> bool:
         if not cand or len(cand) < 4:
@@ -323,12 +337,17 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         words = [w.lower().strip(".,!?:;") for w in re.split(r"\s+", cand) if w.strip()]
         if len(words) < 2:
             return False
-        if any(w in INVALID_NAME_WORDS for w in words):
+        # Reject if any word is an airline name or UI word
+        if any(w in INVALID_NAME_WORDS or w in AIRLINE_NAMES for w in words):
+            return False
+        # Reject if any word is purely numeric
+        if any(w.isdigit() for w in words):
             return False
         return True
 
     passenger_name = ""
-    # Check IATA ticket format SURNAME / FIRSTNAME MR/MRS
+
+    # Strategy 1: IATA ticket format SURNAME/FIRSTNAME MR/MRS
     for iata_match in re.finditer(r"\b([A-Z]{2,20})\s*/\s*([A-Z]{2,20})(?:\s+(?:MR|MRS|MS|DR|PROF))?\b", document_text):
         last = iata_match.group(1).title()
         first = iata_match.group(2).title()
@@ -337,6 +356,7 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
             passenger_name = cand
             break
 
+    # Strategy 2: SURNAME, FIRSTNAME format
     if not passenger_name:
         for reverse_name_match in re.finditer(r"\b([A-Z]{2,15}),\s*([A-Z]{2,15})\b", document_text):
             last = reverse_name_match.group(1).title()
@@ -346,11 +366,38 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
                 passenger_name = cand
                 break
 
+    # Strategy 3: Scan lines after "PASSENGER NAME" label (handles multi-line OCR output)
     if not passenger_name:
-        for name_match in re.finditer(r"(?:PASSENGER NAME|PASSENGER|FULL NAME|CUSTOMER|NAME)[\s:#]+([A-Za-z]+(?:[ \t]+[A-Za-z]+)+)", document_text, re.IGNORECASE):
+        for i, line in enumerate(lines):
+            if re.search(r"PASSENGER\s+NAME", line, re.IGNORECASE):
+                # Scan the next 3 lines for the actual name
+                for j in range(i + 1, min(i + 4, len(lines))):
+                    candidate_line = lines[j].strip()
+                    # Remove title suffixes for validation but keep them in output
+                    clean = re.sub(r"\b(MR|MRS|MS|DR|PROF)\b", "", candidate_line, flags=re.IGNORECASE).strip()
+                    clean_title = candidate_line.strip().title()
+                    if _is_valid_person_name(clean) and len(clean.split()) >= 1:
+                        passenger_name = clean_title
+                        break
+                if passenger_name:
+                    break
+
+    # Strategy 4: NAME label followed by name on same line
+    if not passenger_name:
+        for name_match in re.finditer(r"(?:PASSENGER NAME|FULL NAME|CUSTOMER|NAME)[\s:#]+([A-Za-z]+(?:[ \t]+[A-Za-z]+)+)", document_text, re.IGNORECASE):
             clean_name = name_match.group(1).strip().title()
             if _is_valid_person_name(clean_name):
                 passenger_name = clean_name
+                break
+
+    # Strategy 5: FIRSTNAME MR/MRS LASTNAME pattern (common in boarding passes)
+    if not passenger_name:
+        for m in re.finditer(r"\b([A-Z]{2,20})\s+(?:MR|MRS|MS|DR)\s+([A-Z]{2,20})\b", document_text):
+            first = m.group(1).title()
+            last = m.group(2).title()
+            cand = f"{first} {last}"
+            if _is_valid_person_name(cand):
+                passenger_name = cand
                 break
 
     # 5. Expense Amount
@@ -362,27 +409,42 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         if valid_expenses:
             expense_amount = max(valid_expenses)
 
-    # 6. Flight Date
+    # 6. Flight Date — require sensible 4-digit year (2020+) or use current year for DD MON patterns
+    import time as _time
+    current_year = int(_time.strftime("%Y"))
     flight_date = ""
-    dmy_str_match = re.search(r"\b(\d{1,2})[\s/-]+([A-Za-z]{3})[\s/-]+(\d{2,4})\b", document_text)
-    if dmy_str_match:
-        day = int(dmy_str_match.group(1))
-        mon = dmy_str_match.group(2).upper()
-        yr = dmy_str_match.group(3)
-        if len(yr) == 2: yr = f"20{yr}"
-        if mon in MONTH_MAP:
-            flight_date = f"{yr}-{MONTH_MAP[mon]}-{day:02d}"
 
+    # Try DD MON YYYY (must have 4-digit year >= 2020)
+    for m in re.finditer(r"\b(\d{1,2})\s+([A-Za-z]{3})\s+(20\d{2})\b", document_text):
+        day = int(m.group(1))
+        mon = m.group(2).upper()
+        yr = m.group(3)
+        if mon in MONTH_MAP and 1 <= day <= 31:
+            flight_date = f"{yr}-{MONTH_MAP[mon]}-{day:02d}"
+            break
+
+    # Try DD MON without year — use current year
+    if not flight_date:
+        for m in re.finditer(r"\b(\d{1,2})\s+([A-Za-z]{3})\b", document_text):
+            day = int(m.group(1))
+            mon = m.group(2).upper()
+            if mon in MONTH_MAP and 1 <= day <= 31:
+                flight_date = f"{current_year}-{MONTH_MAP[mon]}-{day:02d}"
+                break
+
+    # Try ISO format YYYY-MM-DD
     if not flight_date:
         iso_match = re.search(r"\b(202\d-\d{2}-\d{2})\b", document_text)
         if iso_match:
             flight_date = iso_match.group(1)
 
+    # Try DD/MM/YYYY numeric
     if not flight_date:
-        dmy_num_match = re.search(r"\b(\d{1,2})[/.](\d{1,2})[/.](\d{4})\b", document_text)
+        dmy_num_match = re.search(r"\b(\d{1,2})[/.](\d{1,2})[/.](20\d{2})\b", document_text)
         if dmy_num_match:
-            d, m, y = int(dmy_num_match.group(1)), int(dmy_num_match.group(2)), dmy_num_match.group(3)
-            flight_date = f"{y}-{m:02d}-{d:02d}"
+            d, m_val, y = int(dmy_num_match.group(1)), int(dmy_num_match.group(2)), dmy_num_match.group(3)
+            if 1 <= d <= 31 and 1 <= m_val <= 12:
+                flight_date = f"{y}-{m_val:02d}-{d:02d}"
 
     return {
         "passenger_name": passenger_name,
@@ -398,8 +460,8 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         "raw_text": document_text
     }
 
-
 def _merge_ai_result_with_knowledge_base(ai_result: Dict, document_text: str, filename: str) -> Dict:
+
     """
     Merges AI-extracted fields with knowledge base lookups for carrier enrichment.
     Never invents mock values.
@@ -519,6 +581,109 @@ def parse_receipt_or_boarding_pass(document_text: str, filename: Optional[str] =
         extracted = _regex_fallback_parse(document_text or "", filename or "")
 
     return _build_result(extracted, filename or "boarding_pass.jpg", ai_powered)
+
+
+# EasyOCR reader singleton — loaded once, reused across requests
+_easyocr_reader = None
+
+def _get_easyocr_reader():
+    """Lazily loads and caches the EasyOCR reader (first call takes ~10s to load model)."""
+    global _easyocr_reader
+    if _easyocr_reader is None:
+        try:
+            import easyocr
+            logger.info("Loading EasyOCR model (first time — downloading if needed)...")
+            _easyocr_reader = easyocr.Reader(['en'], gpu=False, verbose=False)
+            logger.info("EasyOCR model loaded OK.")
+        except Exception as e:
+            logger.warning(f"EasyOCR not available: {e}")
+            _easyocr_reader = False  # Mark as unavailable so we don't retry
+    return _easyocr_reader if _easyocr_reader else None
+
+
+def _try_easyocr_extract(image_bytes: bytes) -> str:
+    """
+    Uses EasyOCR (deep learning CRAFT+CRNN) to extract text from an image.
+    Far superior to Windows OCR for photographed/angled documents.
+    Returns concatenated text from all detected regions, sorted top-to-bottom.
+    """
+    reader = _get_easyocr_reader()
+    if not reader:
+        return ""
+
+    try:
+        import io
+        import PIL.Image
+        import PIL.ImageEnhance
+        import PIL.ImageOps
+        import numpy as np
+
+        orig = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        w, h = orig.size
+
+        # App UI text lines to filter out from results
+        UI_FILTER = [
+            "upload boarding pass", "select an image", "select file",
+            "file uploaded", "parse document", "generate claim",
+            "aviation knowledge base", "parsed by", "omniclaim", "strands ai",
+            "review & edit", "active claim", "eligible flights",
+            "boarding pass or receipt file", "jpg, png",
+        ]
+
+        def _is_ui_text(txt: str) -> bool:
+            lower = txt.lower().strip()
+            return any(frag in lower for frag in UI_FILTER)
+
+        all_results = []
+
+        def _run_ocr_on(pil_img, label=""):
+            try:
+                arr = np.array(pil_img)
+                results = reader.readtext(arr, detail=1, paragraph=False)
+                lines = []
+                for (bbox, text, conf) in results:
+                    text = text.strip()
+                    if text and conf >= 0.25 and not _is_ui_text(text):
+                        # Get top-y coordinate for sorting
+                        top_y = min(pt[1] for pt in bbox)
+                        lines.append((top_y, text))
+                lines.sort(key=lambda x: x[0])
+                for _, t in lines:
+                    if t and t not in all_results:
+                        all_results.append(t)
+                logger.info(f"EasyOCR [{label}]: {len(lines)} lines")
+            except Exception as ex:
+                logger.warning(f"EasyOCR [{label}] failed: {ex}")
+
+        def _enhance(img, contrast=1.8, sharpness=2.0):
+            img = PIL.ImageEnhance.Contrast(img).enhance(contrast)
+            img = PIL.ImageEnhance.Sharpness(img).enhance(sharpness)
+            return img
+
+        def _scale(img, target=2000):
+            iw, ih = img.size
+            sc = max(1.0, float(target) / max(iw, ih, 1))
+            if sc > 1.0:
+                return img.resize((int(iw * sc), int(ih * sc)), PIL.Image.Resampling.LANCZOS)
+            return img
+
+        # Pass 1: Full image enhanced
+        _run_ocr_on(_enhance(_scale(orig)), "full")
+
+        # Pass 2: Tight ticket area crop (center of image where paper usually is)
+        c2 = orig.crop((int(w * 0.22), int(h * 0.33), int(w * 0.78), int(h * 0.65)))
+        _run_ocr_on(_enhance(_scale(c2, 2400), contrast=2.2, sharpness=2.5), "ticket_crop")
+
+        # Pass 3: Grayscale autocontrast of full image
+        gray = PIL.ImageOps.autocontrast(orig.convert("L"), cutoff=2).convert("RGB")
+        _run_ocr_on(_scale(gray, 2000), "grayscale")
+
+        return "\n".join(all_results)
+
+    except Exception as e:
+        logger.warning(f"EasyOCR extraction failed: {e}")
+        return ""
+
 
 
 def _local_windows_ocr(image_bytes: bytes) -> str:
@@ -675,7 +840,7 @@ def _local_windows_ocr(image_bytes: bytes) -> str:
 def parse_image_boarding_pass(image_bytes_b64: str, filename: Optional[str] = "boarding_pass.jpg", media_type: Optional[str] = "image/jpeg") -> str:
     """
     Multimodal Vision AI parser that processes actual image files (JPEG, PNG, PDF preview)
-    of boarding passes and receipts using AWS Bedrock Claude Vision, with Windows Native OCR fallback.
+    of boarding passes and receipts using AWS Bedrock Claude Vision, with EasyOCR + Windows OCR fallback.
 
     Args:
         image_bytes_b64: Base64-encoded image bytes.
@@ -693,6 +858,7 @@ def parse_image_boarding_pass(image_bytes_b64: str, filename: Optional[str] = "b
         logger.error(f"Failed to decode base64 image: {e}")
         return json.dumps({"status": "ERROR", "error": "Invalid base64 image data"})
 
+    # 1. Try AWS Bedrock Claude Vision (best quality, requires AWS creds)
     ai_result = _try_bedrock_vision_parse(image_bytes, media_type or "image/jpeg")
     ai_powered = False
 
@@ -700,13 +866,22 @@ def parse_image_boarding_pass(image_bytes_b64: str, filename: Optional[str] = "b
         ai_powered = True
         extracted = _merge_ai_result_with_knowledge_base(ai_result, "", filename or "")
     else:
-        logger.info("Bedrock vision unavailable/skipped. Falling back to Local Windows Native OCR...")
-        local_ocr_text = _local_windows_ocr(image_bytes)
-        logger.info(f"Local Windows Native OCR extracted {len(local_ocr_text)} characters.")
-        
-        if local_ocr_text:
-            extracted = _regex_fallback_parse(local_ocr_text, filename or "")
-            extracted["parsed_by"] = "Local Windows Native OCR + Aviation Knowledge Base"
+        # 2. Try EasyOCR (deep learning — reads angled, photographed documents)
+        logger.info("Bedrock unavailable. Trying EasyOCR (deep learning)...")
+        ocr_text = _try_easyocr_extract(image_bytes)
+        ocr_engine = "EasyOCR Deep Learning"
+
+        if not ocr_text or len(ocr_text.strip()) < 10:
+            # 3. Fall back to Windows Native OCR
+            logger.info("EasyOCR returned little/nothing. Falling back to Windows Native OCR...")
+            ocr_text = _local_windows_ocr(image_bytes)
+            ocr_engine = "Windows Native OCR"
+
+        logger.info(f"{ocr_engine} extracted {len(ocr_text)} characters:\n{ocr_text[:400]}")
+
+        if ocr_text and ocr_text.strip():
+            extracted = _regex_fallback_parse(ocr_text, filename or "")
+            extracted["parsed_by"] = f"{ocr_engine} + Aviation Knowledge Base"
         else:
             extracted = {
                 "passenger_name": "",
@@ -719,6 +894,8 @@ def parse_image_boarding_pass(image_bytes_b64: str, filename: Optional[str] = "b
                 "destination_iata": "",
                 "seat": "",
                 "detected_carrier_info": None,
+                "parsed_by": "No OCR engine available",
             }
 
     return _build_result(extracted, filename or "boarding_pass.jpg", ai_powered)
+
