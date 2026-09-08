@@ -364,12 +364,7 @@ ${passenger || '[PASSENGER NAME]'}`;
 
   const handleParseDocumentBackend = async () => {
     setSubmittedSuccess(false);
-    // If claimData is ALREADY populated from image upload, preserve it and navigate directly to Active Claim tab!
-    if (claimData.carrier || claimData.flightNumber || claimData.passengerName || claimData.pnr) {
-      setActiveTab('claim');
-      return;
-    }
-    if (ocrText && ocrText.trim() && !ocrText.includes('[Parsed by')) {
+    if (ocrText && ocrText.trim()) {
       await parseDocumentWithText(ocrText);
     }
     setActiveTab('claim');
