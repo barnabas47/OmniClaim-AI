@@ -218,79 +218,101 @@ def upload_document(req: DocumentUploadRequest):
 
 @app.post("/api/pipeline/upload-document-image")
 async def upload_document_image(file: UploadFile = File(...)):
-    contents = await file.read()
-    image_b64 = base64.b64encode(contents).decode("utf-8")
-    media_type = file.content_type or "image/jpeg"
-    filename = file.filename or "uploaded_document.jpg"
-
-    parsed_raw = parse_image_boarding_pass(image_b64, filename=filename, media_type=media_type)
-    
     try:
-        parsed_json = json.loads(parsed_raw)
-        parsed_info = parsed_json.get("vision_ocr_extracted", {})
-    except Exception:
-        parsed_info = {}
+        contents = await file.read()
+        image_b64 = base64.b64encode(contents).decode("utf-8")
+        media_type = file.content_type or "image/jpeg"
+        filename = file.filename or "uploaded_document.jpg"
 
-    flight_number = parsed_info.get("flight_number") or ""
-    passenger_name = parsed_info.get("passenger_name") or ""
-    pnr_code = parsed_info.get("pnr_code") or ""
-    receipts_amount_eur = float(parsed_info.get("incurred_expense_receipt_eur") or 0.0)
-
-    flight_date = parsed_info.get("flight_date")
-    if not flight_date and flight_number:
+        parsed_raw = parse_image_boarding_pass(image_b64, filename=filename, media_type=media_type)
+        
         try:
-            conn = sqlite3.connect(DB_PATH)
-            cursor = conn.cursor()
-            cursor.execute("SELECT flight_date FROM eligible_flights WHERE flight_number = ? ORDER BY id DESC LIMIT 1", (flight_number,))
-            row = cursor.fetchone()
-            if row:
-                flight_date = row[0]
-            conn.close()
+            parsed_json = json.loads(parsed_raw)
+            parsed_info = parsed_json.get("vision_ocr_extracted", {})
         except Exception:
-            pass
+            parsed_info = {}
 
-    parsed_info["flight_date"] = flight_date or ""
+        flight_number = parsed_info.get("flight_number") or ""
+        passenger_name = parsed_info.get("passenger_name") or ""
+        pnr_code = parsed_info.get("pnr_code") or ""
+        receipts_amount_eur = float(parsed_info.get("incurred_expense_receipt_eur") or 0.0)
 
-    res = orchestrator.process_flight_compensation_pipeline(
-        flight_number=flight_number,
-        passenger_name=passenger_name,
-        pnr_code=pnr_code,
-        flight_date=flight_date or time.strftime("%Y-%m-%d"),
-        receipts_amount_eur=receipts_amount_eur
-    )
-    
-    decision_pkg = res.get("decision_package")
-    if not decision_pkg:
-        decision_pkg = {
-            "decision_id": f"CLM-{flight_number or 'OCR'}-{int(time.time())}",
-            "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "passenger_name": passenger_name,
-            "pnr_code": pnr_code,
-            "flight_info": {
-                "flight_number": flight_number,
-                "carrier": parsed_info.get("knowledge_base_match", ""),
-                "route": "",
-                "delay_duration": "",
-                "airline_excuse": "",
-                "flight_date": flight_date
-            },
-            "compensation": {
-                "amount_eur": receipts_amount_eur,
-                "statutory_amount_eur": 0.0,
-                "duty_of_care_expenses_eur": receipts_amount_eur
+        flight_date = parsed_info.get("flight_date")
+        if not flight_date and flight_number:
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT flight_date FROM eligible_flights WHERE flight_number = ? ORDER BY id DESC LIMIT 1", (flight_number,))
+                row = cursor.fetchone()
+                if row:
+                    flight_date = row[0]
+                conn.close()
+            except Exception:
+                pass
+
+        parsed_info["flight_date"] = flight_date or ""
+
+        res = orchestrator.process_flight_compensation_pipeline(
+            flight_number=flight_number,
+            passenger_name=passenger_name,
+            pnr_code=pnr_code,
+            flight_date=flight_date or time.strftime("%Y-%m-%d"),
+            receipts_amount_eur=receipts_amount_eur
+        )
+        
+        decision_pkg = res.get("decision_package")
+        if not decision_pkg:
+            decision_pkg = {
+                "decision_id": f"CLM-{flight_number or 'OCR'}-{int(time.time())}",
+                "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "passenger_name": passenger_name,
+                "pnr_code": pnr_code,
+                "flight_info": {
+                    "flight_number": flight_number,
+                    "carrier": parsed_info.get("knowledge_base_match", ""),
+                    "route": "",
+                    "delay_duration": "",
+                    "airline_excuse": "",
+                    "flight_date": flight_date
+                },
+                "compensation": {
+                    "amount_eur": receipts_amount_eur,
+                    "statutory_amount_eur": 0.0,
+                    "duty_of_care_expenses_eur": receipts_amount_eur
+                }
             }
-        }
-    else:
-        decision_pkg["flight_info"]["flight_date"] = flight_date
+        else:
+            decision_pkg["flight_info"]["flight_date"] = flight_date
 
-    DECISION_STORE[decision_pkg["decision_id"]] = decision_pkg
-    
-    return {
-        "status": "SUCCESS",
-        "extracted_ocr": parsed_info,
-        "decision_package": decision_pkg,
-        "telemetry_logs": res.get("telemetry_logs", [])
-    }
+        DECISION_STORE[decision_pkg["decision_id"]] = decision_pkg
+        
+        return {
+            "status": "SUCCESS",
+            "extracted_ocr": parsed_info,
+            "decision_package": decision_pkg,
+            "telemetry_logs": res.get("telemetry_logs", [])
+        }
+    except Exception as e:
+        logger.error(f"upload_document_image handler error: {e}")
+        return {
+            "status": "PARTIAL",
+            "extracted_ocr": {
+                "flight_number": "",
+                "passenger_name": "",
+                "pnr_code": "",
+                "flight_date": "",
+                "knowledge_base_match": "",
+                "incurred_expense_receipt_eur": 0.0,
+                "raw_text": f"Error: {e}"
+            },
+            "decision_package": {
+                "decision_id": f"CLM-OCR-{int(time.time())}",
+                "flight_info": {"carrier": "", "flight_number": "", "route": "", "flight_date": ""},
+                "compensation": {"amount_eur": 0.0, "statutory_amount_eur": 0.0, "duty_of_care_expenses_eur": 0.0}
+            },
+            "telemetry_logs": []
+        }
+
 
 @app.post("/api/pipeline/approve-decision")
 def approve_decision(req: DecisionApprovalRequest):

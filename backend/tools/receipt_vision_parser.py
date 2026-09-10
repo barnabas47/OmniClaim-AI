@@ -666,9 +666,11 @@ def _get_easyocr_reader():
     global _easyocr_reader
     if _easyocr_reader is None:
         try:
+            import torch
+            torch.set_num_threads(1)
             import easyocr
-            logger.info("Loading EasyOCR model (first time — downloading if needed)...")
-            _easyocr_reader = easyocr.Reader(['en'], gpu=False, verbose=False)
+            logger.info("Loading EasyOCR model...")
+            _easyocr_reader = easyocr.Reader(['en'], gpu=False, verbose=False, quantize=True)
             logger.info("EasyOCR model loaded OK.")
         except Exception as e:
             logger.warning(f"EasyOCR not available: {e}")
@@ -676,27 +678,52 @@ def _get_easyocr_reader():
     return _easyocr_reader if _easyocr_reader else None
 
 
+def _try_pytesseract_extract(image_bytes: bytes) -> str:
+    """Attempts lightweight pytesseract OCR if tesseract binary is installed."""
+    try:
+        import pytesseract
+        import PIL.Image
+        import io
+        img = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        text = pytesseract.image_to_string(img)
+        if text and len(text.strip()) > 10:
+            logger.info(f"Pytesseract extracted {len(text)} chars")
+            return text
+    except Exception:
+        pass
+    return ""
+
+
 def _try_easyocr_extract(image_bytes: bytes) -> str:
     """
     Uses EasyOCR (deep learning CRAFT+CRNN) to extract text from an image.
-    Far superior to Windows OCR for photographed/angled documents.
-    Returns concatenated text from all detected regions, sorted top-to-bottom.
+    Optimized for low-memory (512MB RAM) servers with bound image size and memory cleanup.
     """
+    # 1. Try pytesseract first if available (uses <10MB RAM)
+    tess_text = _try_pytesseract_extract(image_bytes)
+    if tess_text:
+        return tess_text
+
     reader = _get_easyocr_reader()
     if not reader:
         return ""
 
     try:
         import io
+        import gc
         import PIL.Image
         import PIL.ImageEnhance
-        import PIL.ImageOps
         import numpy as np
 
         orig = PIL.Image.open(io.BytesIO(image_bytes)).convert("RGB")
         w, h = orig.size
 
-        # App UI text lines to filter out from results
+        # Bound maximum dimension to 1000px to prevent memory spikes on 512MB RAM servers
+        max_dim = max(w, h)
+        if max_dim > 1000:
+            scale = 1000.0 / max_dim
+            orig = orig.resize((int(w * scale), int(h * scale)), PIL.Image.Resampling.LANCZOS)
+
         UI_FILTER = [
             "upload boarding pass", "select an image", "select file",
             "file uploaded", "parse document", "generate claim",
@@ -709,55 +736,33 @@ def _try_easyocr_extract(image_bytes: bytes) -> str:
             lower = txt.lower().strip()
             return any(frag in lower for frag in UI_FILTER)
 
-        all_results = []
+        # Enhance contrast moderately
+        enhanced = PIL.ImageEnhance.Contrast(orig).enhance(1.6)
+        enhanced = PIL.ImageEnhance.Sharpness(enhanced).enhance(1.8)
+        arr = np.array(enhanced)
 
-        def _run_ocr_on(pil_img, label=""):
-            try:
-                arr = np.array(pil_img)
-                results = reader.readtext(arr, detail=1, paragraph=False)
-                lines = []
-                for (bbox, text, conf) in results:
-                    text = text.strip()
-                    if text and conf >= 0.25 and not _is_ui_text(text):
-                        # Get top-y coordinate for sorting
-                        top_y = min(pt[1] for pt in bbox)
-                        lines.append((top_y, text))
-                lines.sort(key=lambda x: x[0])
-                for _, t in lines:
-                    if t and t not in all_results:
-                        all_results.append(t)
-                logger.info(f"EasyOCR [{label}]: {len(lines)} lines")
-            except Exception as ex:
-                logger.warning(f"EasyOCR [{label}] failed: {ex}")
+        # Single forward pass through CRAFT + CRNN
+        results = reader.readtext(arr, detail=1, paragraph=False, batch_size=1)
+        lines = []
+        for (bbox, text, conf) in results:
+            text = text.strip()
+            if text and conf >= 0.20 and not _is_ui_text(text):
+                top_y = min(pt[1] for pt in bbox)
+                lines.append((top_y, text))
 
-        def _enhance(img, contrast=1.8, sharpness=2.0):
-            img = PIL.ImageEnhance.Contrast(img).enhance(contrast)
-            img = PIL.ImageEnhance.Sharpness(img).enhance(sharpness)
-            return img
+        lines.sort(key=lambda x: x[0])
+        extracted_lines = [t for _, t in lines]
 
-        def _scale(img, target=2000):
-            iw, ih = img.size
-            sc = max(1.0, float(target) / max(iw, ih, 1))
-            if sc > 1.0:
-                return img.resize((int(iw * sc), int(ih * sc)), PIL.Image.Resampling.LANCZOS)
-            return img
+        # Force garbage collection to free intermediate PyTorch tensors
+        del arr, orig, enhanced, results
+        gc.collect()
 
-        # Pass 1: Full image enhanced
-        _run_ocr_on(_enhance(_scale(orig)), "full")
-
-        # Pass 2: Tight ticket area crop (center of image where paper usually is)
-        c2 = orig.crop((int(w * 0.22), int(h * 0.33), int(w * 0.78), int(h * 0.65)))
-        _run_ocr_on(_enhance(_scale(c2, 2400), contrast=2.2, sharpness=2.5), "ticket_crop")
-
-        # Pass 3: Grayscale autocontrast of full image
-        gray = PIL.ImageOps.autocontrast(orig.convert("L"), cutoff=2).convert("RGB")
-        _run_ocr_on(_scale(gray, 2000), "grayscale")
-
-        return "\n".join(all_results)
+        return "\n".join(extracted_lines)
 
     except Exception as e:
         logger.warning(f"EasyOCR extraction failed: {e}")
         return ""
+
 
 
 
