@@ -22,6 +22,7 @@ import {
   X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import Tesseract from 'tesseract.js';
 
 interface EligibleFlight {
   id: number;
@@ -290,61 +291,74 @@ ${passenger || '[PASSENGER NAME]'}`;
       const isText = file.type.includes('text') || file.name.endsWith('.txt');
 
       if (isImage) {
-        const formData = new FormData();
-        formData.append('file', file);
+        let extractedText = '';
+        try {
+          // 1. Client-Side in-browser OCR (0 server RAM, works on mobile & web)
+          const tessResult = await Tesseract.recognize(file, 'eng');
+          extractedText = tessResult.data?.text || '';
+        } catch (tessErr) {
+          console.warn('In-browser Tesseract note, trying backend:', tessErr);
+        }
 
-        const response = await fetch('/api/pipeline/upload-document-image', {
-          method: 'POST',
-          body: formData
-        });
+        if (extractedText && extractedText.trim().length > 15) {
+          setOcrText(extractedText);
+          await parseDocumentWithText(extractedText, file.name);
+          setActiveTab('claim');
+        } else {
+          // 2. Cloud Backend API upload fallback
+          const formData = new FormData();
+          formData.append('file', file);
 
-        if (response.ok) {
-          const resData = await response.json();
-          const pkg = resData.decision_package || {};
-          const ocrInfo = resData.extracted_ocr || {};
-
-          const updatedCarrier = ocrInfo.knowledge_base_match || pkg.flight_info?.carrier || '';
-          const updatedFlight = ocrInfo.flight_number || pkg.flight_info?.flight_number || '';
-          const updatedPnr = ocrInfo.pnr_code || '';
-          const updatedPassenger = ocrInfo.passenger_name || '';
-          const updatedStat = pkg.compensation?.statutory_amount_eur || 0;
-          const updatedRec = ocrInfo.incurred_expense_receipt_eur !== undefined ? ocrInfo.incurred_expense_receipt_eur : (pkg.compensation?.duty_of_care_expenses_eur || 0);
-          const updatedRoute = pkg.flight_info?.route || '';
-          const updatedDate = ocrInfo.flight_date || pkg.flight_info?.flight_date || '';
-
-          setClaimData({
-            claimId: pkg.decision_id || `CLM-OCR-${Date.now()}`,
-            carrier: updatedCarrier,
-            flightNumber: updatedFlight,
-            pnr: updatedPnr,
-            passengerName: updatedPassenger,
-            passengerEmail: '',
-            delayDuration: pkg.flight_info?.delay_duration || '',
-            statutoryEur: updatedStat,
-            receiptsEur: updatedRec,
-            flightDate: updatedDate,
-            route: updatedRoute
+          const response = await fetch('/api/pipeline/upload-document-image', {
+            method: 'POST',
+            body: formData
           });
 
-          setLegalNotice(
-            generateLegalLetter(updatedCarrier, updatedFlight, updatedPnr, updatedPassenger, updatedStat, updatedRec, updatedRoute, updatedDate)
-          );
+          if (response.ok) {
+            const resData = await response.json();
+            const pkg = resData.decision_package || {};
+            const ocrInfo = resData.extracted_ocr || {};
 
-          // Build clean summary text (no '[Parsed by...]' noise shown to user)
-          const summaryParts = [
-            updatedCarrier ? `AIRLINE: ${updatedCarrier}` : '',
-            updatedPassenger ? `PASSENGER: ${updatedPassenger}` : '',
-            updatedFlight ? `FLIGHT: ${updatedFlight}` : '',
-            updatedPnr ? `PNR: ${updatedPnr}` : '',
-            updatedDate ? `DATE: ${updatedDate}` : '',
-            updatedRec > 0 ? `EXPENSE: EUR ${updatedRec.toFixed(2)}` : '',
-          ].filter(Boolean).join('\n');
-          
-          const rawText = ocrInfo.raw_text || '';
-          setOcrText(rawText ? `${summaryParts}\n\n--- RAW OCR TEXT ---\n${rawText}` : summaryParts);
+            const updatedCarrier = ocrInfo.knowledge_base_match || pkg.flight_info?.carrier || '';
+            const updatedFlight = ocrInfo.flight_number || pkg.flight_info?.flight_number || '';
+            const updatedPnr = ocrInfo.pnr_code || '';
+            const updatedPassenger = ocrInfo.passenger_name || '';
+            const updatedStat = pkg.compensation?.statutory_amount_eur || 0;
+            const updatedRec = ocrInfo.incurred_expense_receipt_eur !== undefined ? ocrInfo.incurred_expense_receipt_eur : (pkg.compensation?.duty_of_care_expenses_eur || 0);
+            const updatedRoute = pkg.flight_info?.route || '';
+            const updatedDate = ocrInfo.flight_date || pkg.flight_info?.flight_date || '';
 
-          // Auto-navigate to claim tab immediately after processing
-          setActiveTab('claim');
+            setClaimData({
+              claimId: pkg.decision_id || `CLM-OCR-${Date.now()}`,
+              carrier: updatedCarrier,
+              flightNumber: updatedFlight,
+              pnr: updatedPnr,
+              passengerName: updatedPassenger,
+              passengerEmail: '',
+              delayDuration: pkg.flight_info?.delay_duration || '',
+              statutoryEur: updatedStat,
+              receiptsEur: updatedRec,
+              flightDate: updatedDate,
+              route: updatedRoute
+            });
+
+            setLegalNotice(
+              generateLegalLetter(updatedCarrier, updatedFlight, updatedPnr, updatedPassenger, updatedStat, updatedRec, updatedRoute, updatedDate)
+            );
+
+            const summaryParts = [
+              updatedCarrier ? `AIRLINE: ${updatedCarrier}` : '',
+              updatedPassenger ? `PASSENGER: ${updatedPassenger}` : '',
+              updatedFlight ? `FLIGHT: ${updatedFlight}` : '',
+              updatedPnr ? `PNR: ${updatedPnr}` : '',
+              updatedDate ? `DATE: ${updatedDate}` : '',
+              updatedRec > 0 ? `EXPENSE: EUR ${updatedRec.toFixed(2)}` : '',
+            ].filter(Boolean).join('\n');
+            
+            const rawText = ocrInfo.raw_text || '';
+            setOcrText(rawText ? `${summaryParts}\n\n--- RAW OCR TEXT ---\n${rawText}` : summaryParts);
+            setActiveTab('claim');
+          }
         }
       } else if (isText) {
         const reader = new FileReader();
