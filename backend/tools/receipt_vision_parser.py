@@ -363,7 +363,7 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
             flight_number = candidate
             break
 
-    # 3. Passenger Name (extracted before PNR to prevent name collision in PNR tokens)
+    # 3. Passenger Name & PNR extraction
     INVALID_NAME_WORDS = {
         "local", "windows", "native", "ocr", "aviation", "knowledge", "base",
         "parsed", "extracted", "confidence", "boarding", "flight", "gate", "seat",
@@ -371,116 +371,127 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
         "ticket", "details", "passenger", "name", "economy", "business", "first",
         "class", "zone", "sequence", "pnr", "reference", "carrier", "system",
         "image", "document", "status", "success", "error", "clause", "notice",
-        "lufthansa", "ryanair", "wizz", "easyjet", "swiss", "austrian", "iberia",
         "png", "jpg", "jpeg", "pdf", "select", "file", "uploaded", "successfully",
         "device", "preview", "choose", "browse", "drag", "drop", "upload",
         "generate", "claim", "parse", "total", "amount", "number", "issuing", "itinerary",
         "summary", "receipt", "electronic", "deutsche", "times", "payment", "card",
         "digits", "fare", "last", "method", "dep", "arr", "ipc", "t1", "t2b",
+        "paris", "vienna", "schwechat", "charles", "gaulle", "london", "frankfurt", "budapest", 
+        "heathrow", "munich", "berlin", "madrid", "barcelona", "amsterdam", "rome", "route", "flight route",
+        "standard", "arrival", "departure", "charges", "ending", "mastercard", "visa", "etkt", "ref", "locator"
     }
     AIRLINE_NAMES = {"lufthansa", "ryanair", "wizz", "easyjet", "swiss", "austrian",
-                     "iberia", "british", "airways", "klm", "emirates", "qatar", "turkish",
+                     "iberia", "british", "airways", "air france", "france", "klm", "emirates", "qatar", "turkish",
                      "delta", "american", "united", "lot", "finnair", "tap", "aegean", "vueling"}
 
     def _is_valid_person_name(cand: str) -> bool:
         if not cand or len(cand) < 4:
             return False
-        words = [w.lower().strip(".,!?:;") for w in re.split(r"\s+", cand) if w.strip()]
+        # Strip honorifics
+        clean = re.sub(r"\b(MR|MRS|MS|DR|PROF|MISS)\b", "", cand, flags=re.IGNORECASE).strip()
+        words = [w.lower().strip(".,!?:;()[]{}*|/\\#@-_") for w in re.split(r"\s+", clean) if w.strip()]
         if len(words) < 2:
             return False
-        # Reject if any word is an airline name or UI word
+        # Reject if any word is an airline name, city, route, or UI word
         if any(w in INVALID_NAME_WORDS or w in AIRLINE_NAMES for w in words):
             return False
         # Reject if any word is purely numeric
         if any(w.isdigit() for w in words):
             return False
+        # Reject if looks like an airport code route (e.g. CDG -> VIE)
+        if re.search(r"-->|->|\b[A-Z]{3}\b", cand):
+            if any(w.upper() in ["CDG", "VIE", "LHR", "BUD", "FRA", "MUC", "JFK", "AMS", "MAD", "BCN"] for w in words):
+                return False
         return True
 
-    passenger_name = ""
+    def _clean_name(name_str: str) -> str:
+        name_str = re.sub(r"\b(?:MR|MRS|MS|MISS|DR|PROF)\b", "", name_str, flags=re.IGNORECASE)
+        name_str = re.sub(r"[^A-Za-z\s-]", "", name_str)
+        parts = [p.capitalize() for p in name_str.split() if p.strip()]
+        return " ".join(parts)
 
-    # Strategy 1: IATA ticket format SURNAME/FIRSTNAME MR/MRS
-    for iata_match in re.finditer(r"\b([A-Z]{2,20})\s*/\s*([A-Z]{2,20})(?:\s+(?:MR|MRS|MS|DR|PROF))?\b", document_text):
-        last = iata_match.group(1).title()
-        first = iata_match.group(2).title()
-        cand = f"{first} {last}"
-        if _is_valid_person_name(cand):
-            passenger_name = cand
+    # 3. PNR Code (Run before Name to extract strict PNR and avoid misinterpreting names as PNR)
+    pnr_code = ""
+    
+    # Priority 1: Explicit PNR: XXXXXX or BOOKING REF: XXXXXX with colon/dash on same line
+    for m in re.finditer(r"(?:PNR|BOOKING\s+REF(?:ERENCE)?|RECORD\s+LOCATOR)[ \t]*[:#-][ \t]*([A-Z0-9]{5,7})\b", document_text, re.IGNORECASE):
+        cand = m.group(1).upper()
+        if cand not in ["REFERENCE", "BOOKING", "CONFIRMATION", "RESERVATION", "LOCATOR", "NUMBER", "DETAILS", "TICKET"]:
+            pnr_code = f"PNR-{cand}"
             break
 
-    # Strategy 2: SURNAME, FIRSTNAME format
+    # Priority 2: PNR on same line with spaces
+    if not pnr_code:
+        for m in re.finditer(r"\bPNR[ \t]+([A-Z0-9]{5,7})\b", document_text, re.IGNORECASE):
+            cand = m.group(1).upper()
+            if cand not in ["REFERENCE", "BOOKING"] and any(c.isdigit() for c in cand):
+                pnr_code = f"PNR-{cand}"
+                break
+
+    # Priority 3: 6-char alphanumeric code with BOTH letters and digits (e.g. 7K9Y2W, X8R4T9)
+    if not pnr_code:
+        for m in re.finditer(r"\b([A-Z0-9]{5,7})\b", document_text):
+            cand = m.group(1).upper()
+            if re.search(r"[A-Z]", cand) and re.search(r"\d", cand) and len(cand) == 6:
+                if not any(cand.startswith(pfx) for pfx in VALID_PREFIXES):
+                    skip_words = {"SELECT", "UPLOAD", "LATEST", "PASSED", "TICKET", "FLIGHT", "NUMBER",
+                                  "DATE", "AMOUNT", "PAYMENT", "METHOD", "ECONOMY", "BUSINESS", "BAGGAGE", "STANDA"}
+                    if cand not in skip_words:
+                        pnr_code = f"PNR-{cand}"
+                        break
+
+    # 4. Passenger Name
+    passenger_name = ""
+    
+    # Strategy 1: Check lines near "PASSENGER NAME"
+    for i, line in enumerate(lines):
+        if re.search(r"PASSENGER\s+NAME", line, re.IGNORECASE):
+            # Check if name is on same line after PASSENGER NAME:
+            after_label = re.sub(r".*PASSENGER\s+NAME[\s:#]*", "", line, flags=re.IGNORECASE).strip()
+            after_label = re.split(r"\b(?:PNR|BOOKING|SEAT|CLASS|GATE|FLIGHT|DATE|ETKT)\b", after_label, flags=re.IGNORECASE)[0].strip()
+            if _is_valid_person_name(after_label):
+                passenger_name = _clean_name(after_label)
+                break
+                
+            # Check subsequent lines (up to 3 lines)
+            for j in range(i + 1, min(i + 4, len(lines))):
+                cand_line = lines[j].strip()
+                cand_name = re.split(r"\b(?:PNR|BOOKING|SEAT|CLASS|GATE|FLIGHT|DATE|ETKT|-->|->)\b", cand_line, flags=re.IGNORECASE)[0].strip()
+                if _is_valid_person_name(cand_name):
+                    passenger_name = _clean_name(cand_name)
+                    break
+            if passenger_name:
+                break
+
+    # Strategy 2: IATA ticket format SURNAME/FIRSTNAME MR/MRS
+    if not passenger_name:
+        for iata_match in re.finditer(r"\b([A-Z]{2,20})\s*/\s*([A-Z]{2,20})(?:\s+(?:MR|MRS|MS|DR|PROF))?\b", document_text):
+            last = iata_match.group(1).title()
+            first = iata_match.group(2).title()
+            cand = f"{first} {last}"
+            if _is_valid_person_name(cand):
+                passenger_name = _clean_name(cand)
+                break
+
+    # Strategy 3: SURNAME, FIRSTNAME format
     if not passenger_name:
         for reverse_name_match in re.finditer(r"\b([A-Z]{2,15}),\s*([A-Z]{2,15})\b", document_text):
             last = reverse_name_match.group(1).title()
             first = reverse_name_match.group(2).title()
             cand = f"{first} {last}"
             if _is_valid_person_name(cand):
-                passenger_name = cand
+                passenger_name = _clean_name(cand)
                 break
 
-    # Strategy 3: Scan lines after "PASSENGER NAME" label (handles multi-line OCR output)
+    # Strategy 4: FIRSTNAME MR/MRS LASTNAME pattern (e.g. EMILY MS WATSON or JOHN MR SMITH)
     if not passenger_name:
-        for i, line in enumerate(lines):
-            if re.search(r"PASSENGER\s+NAME", line, re.IGNORECASE):
-                for j in range(i + 1, min(i + 4, len(lines))):
-                    candidate_line = lines[j].strip()
-                    clean = re.sub(r"\b(MR|MRS|MS|DR|PROF)\b", "", candidate_line, flags=re.IGNORECASE).strip()
-                    clean_title = candidate_line.strip().title()
-                    if _is_valid_person_name(clean) and len(clean.split()) >= 1:
-                        passenger_name = clean_title
-                        break
-                if passenger_name:
-                    break
-
-    # Strategy 4: NAME label followed by name on same line
-    if not passenger_name:
-        for name_match in re.finditer(r"(?:PASSENGER NAME|FULL NAME|CUSTOMER|NAME)[\s:#]+([A-Za-z]+(?:[ \t]+[A-Za-z]+)+)", document_text, re.IGNORECASE):
-            clean_name = name_match.group(1).strip().title()
-            if _is_valid_person_name(clean_name):
-                passenger_name = clean_name
-                break
-
-    # Strategy 5: FIRSTNAME MR/MRS LASTNAME pattern (common in boarding passes)
-    if not passenger_name:
-        for m in re.finditer(r"\b([A-Z]{2,20})\s+(?:MR|MRS|MS|DR)\s+([A-Z]{2,20})\b", document_text):
+        for m in re.finditer(r"\b([A-Z]{2,20})\s+(?:MR|MRS|MS|DR|MISS)\s+([A-Z]{2,20})\b", document_text, re.IGNORECASE):
             first = m.group(1).title()
             last = m.group(2).title()
             cand = f"{first} {last}"
             if _is_valid_person_name(cand):
-                passenger_name = cand
+                passenger_name = _clean_name(cand)
                 break
-
-    # 4. PNR Code (strict separator & label checks)
-    pnr_code = ""
-    name_words_upper = set(re.findall(r"\b[A-Z]{3,}\b", passenger_name.upper())) if passenger_name else set()
-    
-    # Priority 1: Explicit PNR: XXXXXX or BOOKING REF: XXXXXX
-    for m in re.finditer(r"(?:PNR|BOOKING\s+REF(?:ERENCE)?|RECORD\s+LOCATOR)[\s:#\(\)-]+(?:PNR-)?([A-Z0-9]{5,7})\b", document_text, re.IGNORECASE):
-        cand = m.group(1).upper()
-        if cand not in ["REFERENCE", "BOOKING", "CONFIRMATION", "RESERVATION", "LOCATOR", "NUMBER", "DETAILS", "TICKET"] and cand not in name_words_upper:
-            pnr_code = f"PNR-{cand}"
-            break
-
-    # Priority 2: General PNR pattern
-    if not pnr_code:
-        pnr_pattern = r"(?:PNR|BOOKING|REFERENCE|RECORD|LOCATOR|CONFIRMATION|RESERVATION|REF)[\s:#\(\)-]+(?:PNR-)?([A-Z0-9]{5,7})\b"
-        for m in re.finditer(pnr_pattern, document_text, re.IGNORECASE):
-            cand = m.group(1).upper()
-            if cand not in ["REFERENCE", "BOOKING", "CONFIRMATION", "RESERVATION", "LOCATOR", "NUMBER", "DETAILS", "TICKET"] and cand not in name_words_upper:
-                pnr_code = f"PNR-{cand}"
-                break
-
-    if not pnr_code:
-        # 6-char alphanumeric fallback — MUST contain at least one digit (pure-alpha = a name, not a PNR)
-        for m in re.finditer(r"\b([A-Z][A-Z0-9]{4}[A-Z0-9])\b", document_text):
-            cand = m.group(1).upper()
-            if not re.search(r"\d", cand) or cand in name_words_upper:
-                continue
-            skip_words = {"SELECT", "UPLOAD", "LATEST", "PASSED", "TICKET", "FLIGHT", "NUMBER",
-                          "DATE", "AMOUNT", "PAYMENT", "METHOD", "ECONOMY", "BUSINESS", "BAGGAGE"}
-            if cand in skip_words:
-                continue
-            pnr_code = f"PNR-{cand}"
-            break
 
     # 5. Expense Amount
     expense_amount = 0.0
