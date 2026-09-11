@@ -363,31 +363,7 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
             flight_number = candidate
             break
 
-    # 3. PNR Code (strict separator & label checks)
-    pnr_code = ""
-    pnr_pattern = r"(?:PNR|BOOKING|REFERENCE|RECORD|LOCATOR|CONFIRMATION|RESERVATION|REF)[\s:#\(\)-]+(?:PNR-)?([A-Z0-9]{5,7})\b"
-    for m in re.finditer(pnr_pattern, document_text, re.IGNORECASE):
-        cand = m.group(1).upper()
-        if cand not in ["REFERENCE", "BOOKING", "CONFIRMATION", "RESERVATION", "LOCATOR", "NUMBER", "DETAILS", "TICKET"]:
-            pnr_code = f"PNR-{cand}"
-            break
-
-    if not pnr_code:
-        # 6-char alphanumeric fallback — MUST contain at least one digit (pure-alpha = a name, not a PNR)
-        for m in re.finditer(r"\b([A-Z][A-Z0-9]{4}[A-Z0-9])\b", document_text):
-            cand = m.group(1).upper()
-            # Must have at least one digit character
-            if not re.search(r"\d", cand):
-                continue
-            # Skip known non-PNR tokens
-            skip_words = {"SELECT", "UPLOAD", "LATEST", "PASSED", "TICKET", "FLIGHT", "NUMBER",
-                          "DATE", "AMOUNT", "PAYMENT", "METHOD", "ECONOMY", "BUSINESS", "BAGGAGE"}
-            if cand in skip_words:
-                continue
-            pnr_code = f"PNR-{cand}"
-            break
-
-    # 4. Passenger Name
+    # 3. Passenger Name (extracted before PNR to prevent name collision in PNR tokens)
     INVALID_NAME_WORDS = {
         "local", "windows", "native", "ocr", "aviation", "knowledge", "base",
         "parsed", "extracted", "confidence", "boarding", "flight", "gate", "seat",
@@ -445,10 +421,8 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
     if not passenger_name:
         for i, line in enumerate(lines):
             if re.search(r"PASSENGER\s+NAME", line, re.IGNORECASE):
-                # Scan the next 3 lines for the actual name
                 for j in range(i + 1, min(i + 4, len(lines))):
                     candidate_line = lines[j].strip()
-                    # Remove title suffixes for validation but keep them in output
                     clean = re.sub(r"\b(MR|MRS|MS|DR|PROF)\b", "", candidate_line, flags=re.IGNORECASE).strip()
                     clean_title = candidate_line.strip().title()
                     if _is_valid_person_name(clean) and len(clean.split()) >= 1:
@@ -474,6 +448,39 @@ def _regex_fallback_parse(document_text: str, filename: str) -> Dict:
             if _is_valid_person_name(cand):
                 passenger_name = cand
                 break
+
+    # 4. PNR Code (strict separator & label checks)
+    pnr_code = ""
+    name_words_upper = set(re.findall(r"\b[A-Z]{3,}\b", passenger_name.upper())) if passenger_name else set()
+    
+    # Priority 1: Explicit PNR: XXXXXX or BOOKING REF: XXXXXX
+    for m in re.finditer(r"(?:PNR|BOOKING\s+REF(?:ERENCE)?|RECORD\s+LOCATOR)[\s:#\(\)-]+(?:PNR-)?([A-Z0-9]{5,7})\b", document_text, re.IGNORECASE):
+        cand = m.group(1).upper()
+        if cand not in ["REFERENCE", "BOOKING", "CONFIRMATION", "RESERVATION", "LOCATOR", "NUMBER", "DETAILS", "TICKET"] and cand not in name_words_upper:
+            pnr_code = f"PNR-{cand}"
+            break
+
+    # Priority 2: General PNR pattern
+    if not pnr_code:
+        pnr_pattern = r"(?:PNR|BOOKING|REFERENCE|RECORD|LOCATOR|CONFIRMATION|RESERVATION|REF)[\s:#\(\)-]+(?:PNR-)?([A-Z0-9]{5,7})\b"
+        for m in re.finditer(pnr_pattern, document_text, re.IGNORECASE):
+            cand = m.group(1).upper()
+            if cand not in ["REFERENCE", "BOOKING", "CONFIRMATION", "RESERVATION", "LOCATOR", "NUMBER", "DETAILS", "TICKET"] and cand not in name_words_upper:
+                pnr_code = f"PNR-{cand}"
+                break
+
+    if not pnr_code:
+        # 6-char alphanumeric fallback — MUST contain at least one digit (pure-alpha = a name, not a PNR)
+        for m in re.finditer(r"\b([A-Z][A-Z0-9]{4}[A-Z0-9])\b", document_text):
+            cand = m.group(1).upper()
+            if not re.search(r"\d", cand) or cand in name_words_upper:
+                continue
+            skip_words = {"SELECT", "UPLOAD", "LATEST", "PASSED", "TICKET", "FLIGHT", "NUMBER",
+                          "DATE", "AMOUNT", "PAYMENT", "METHOD", "ECONOMY", "BUSINESS", "BAGGAGE"}
+            if cand in skip_words:
+                continue
+            pnr_code = f"PNR-{cand}"
+            break
 
     # 5. Expense Amount
     expense_amount = 0.0
