@@ -621,8 +621,23 @@ ${passenger || '[PASSENGER NAME]'}
                 />
               </div>
 
-              {/* Date Filter Pills - Horizontal scrolling on mobile */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px', maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
+              {/* Date Filter Pills - Clean, wrap-friendly and scrollbar-hidden */}
+              <div 
+                className="no-scrollbar"
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  marginBottom: '20px', 
+                  overflowX: 'auto', 
+                  flexWrap: 'wrap',
+                  paddingBottom: '2px', 
+                  maxWidth: '100%', 
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
+              >
                 <span style={{ fontSize: '11px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', marginRight: '2px' }}>Date:</span>
                 <button
                   onClick={() => setSelectedDateFilter('ALL')}
@@ -636,7 +651,8 @@ ${passenger || '[PASSENGER NAME]'}
                     fontWeight: '800',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   📅 All ({eligibleFlights.length})
@@ -655,7 +671,8 @@ ${passenger || '[PASSENGER NAME]'}
                       fontWeight: '800',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     {dateStr}
