@@ -19,7 +19,12 @@ import {
   Zap,
   ArrowRight,
   CloudSun,
-  X
+  X,
+  Calendar,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Filter
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import Tesseract from 'tesseract.js';
@@ -410,9 +415,29 @@ ${passenger || '[PASSENGER NAME]'}
     } catch (e) {}
   };
 
-  const [selectedDateFilter, setSelectedDateFilter] = useState<string>("ALL");
+  // Interactive Calendar & Date Filter States
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [calYear, setCalYear] = useState<number>(2026);
+  const [calMonth, setCalMonth] = useState<number>(8); // 0-indexed: 8 = September
 
+  // Date Range Filters: null means all dates
+  const [startDateFilter, setStartDateFilter] = useState<string | null>(null);
+  const [endDateFilter, setEndDateFilter] = useState<string | null>(null);
 
+  // Precompute flight counts per date
+  const flightCountByDate = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const fl of eligibleFlights) {
+      if (fl.flight_date) {
+        counts[fl.flight_date] = (counts[fl.flight_date] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [eligibleFlights]);
+
+  const availableDates = Object.keys(flightCountByDate).sort().reverse();
+
+  // Filtered flights based on search text and calendar date / date range
   const filteredFlights = eligibleFlights.filter(fl => {
     const matchesSearch = 
       fl.flight_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -420,11 +445,61 @@ ${passenger || '[PASSENGER NAME]'}
       fl.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
       fl.flight_date.toLowerCase().includes(searchQuery.toLowerCase());
     
-    if (selectedDateFilter === "ALL") return matchesSearch;
-    return matchesSearch && fl.flight_date === selectedDateFilter;
+    if (!matchesSearch) return false;
+
+    if (!startDateFilter) return true; // All dates
+
+    if (startDateFilter && !endDateFilter) {
+      return fl.flight_date === startDateFilter;
+    }
+
+    if (startDateFilter && endDateFilter) {
+      const minD = startDateFilter <= endDateFilter ? startDateFilter : endDateFilter;
+      const maxD = startDateFilter <= endDateFilter ? endDateFilter : startDateFilter;
+      return fl.flight_date >= minD && fl.flight_date <= maxD;
+    }
+
+    return true;
   });
 
-  const availableDates = Array.from(new Set(eligibleFlights.map(f => f.flight_date))).sort().reverse();
+  const handleCalendarDayClick = (dayStr: string) => {
+    if (!startDateFilter || (startDateFilter && endDateFilter)) {
+      setStartDateFilter(dayStr);
+      setEndDateFilter(null);
+    } else if (startDateFilter && !endDateFilter) {
+      if (dayStr === startDateFilter) {
+        setStartDateFilter(null);
+        setEndDateFilter(null);
+      } else if (dayStr < startDateFilter) {
+        setEndDateFilter(startDateFilter);
+        setStartDateFilter(dayStr);
+      } else {
+        setEndDateFilter(dayStr);
+      }
+    }
+  };
+
+  const setAllDatesFilter = () => {
+    setStartDateFilter(null);
+    setEndDateFilter(null);
+    setIsCalendarOpen(false);
+  };
+
+  const setTodayFilter = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    setStartDateFilter(todayStr);
+    setEndDateFilter(null);
+    setIsCalendarOpen(false);
+  };
+
+  const setLast7DaysFilter = () => {
+    const endD = new Date();
+    const startD = new Date();
+    startD.setDate(startD.getDate() - 7);
+    setStartDateFilter(startD.toISOString().split('T')[0]);
+    setEndDateFilter(endD.toISOString().split('T')[0]);
+    setIsCalendarOpen(false);
+  };
 
 
   const displayedFlights = filteredFlights.slice(0, visibleLimit);
@@ -621,63 +696,270 @@ ${passenger || '[PASSENGER NAME]'}
                 />
               </div>
 
-              {/* Date Filter Pills - Clean, wrap-friendly and scrollbar-hidden */}
-              <div 
-                className="no-scrollbar"
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '6px', 
-                  marginBottom: '20px', 
-                  overflowX: 'auto', 
-                  flexWrap: 'wrap',
-                  paddingBottom: '2px', 
-                  maxWidth: '100%', 
-                  WebkitOverflowScrolling: 'touch',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
-                }}
-              >
-                <span style={{ fontSize: '11px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', marginRight: '2px' }}>Date:</span>
-                <button
-                  onClick={() => setSelectedDateFilter('ALL')}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '16px',
-                    border: selectedDateFilter === 'ALL' ? '1px solid #0EA5E9' : '1px solid rgba(255, 255, 255, 0.1)',
-                    backgroundColor: selectedDateFilter === 'ALL' ? 'rgba(14, 165, 233, 0.25)' : 'rgba(15, 23, 42, 0.6)',
-                    color: selectedDateFilter === 'ALL' ? '#38BDF8' : '#94A3B8',
-                    fontSize: '11px',
-                    fontWeight: '800',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  📅 All ({eligibleFlights.length})
-                </button>
-                {availableDates.map(dateStr => (
-                  <button
-                    key={dateStr}
-                    onClick={() => setSelectedDateFilter(dateStr)}
+              {/* Interactive Calendar & Date Filter Bar */}
+              <div style={{ position: 'relative', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  
+                  {/* Main Calendar Trigger Pill */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                     style={{
-                      padding: '5px 12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '7px 14px',
                       borderRadius: '16px',
-                      border: selectedDateFilter === dateStr ? '1px solid #0EA5E9' : '1px solid rgba(255, 255, 255, 0.1)',
-                      backgroundColor: selectedDateFilter === dateStr ? 'rgba(14, 165, 233, 0.25)' : 'rgba(15, 23, 42, 0.6)',
-                      color: selectedDateFilter === dateStr ? '#38BDF8' : '#94A3B8',
-                      fontSize: '11px',
+                      border: isCalendarOpen || startDateFilter ? '1px solid #0EA5E9' : '1px solid rgba(255, 255, 255, 0.15)',
+                      backgroundColor: startDateFilter ? 'rgba(14, 165, 233, 0.22)' : 'rgba(15, 23, 42, 0.85)',
+                      color: startDateFilter ? '#38BDF8' : '#F1F5F9',
+                      fontSize: '12px',
                       fontWeight: '800',
                       cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      transition: 'all 0.15s ease'
+                      boxShadow: startDateFilter ? '0 0 16px rgba(14, 165, 233, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.3)',
+                      transition: 'all 0.2s ease'
                     }}
                   >
-                    {dateStr}
-                  </button>
-                ))}
+                    <CalendarDays size={14} color={startDateFilter ? "#38BDF8" : "#94A3B8"} />
+                    <span>
+                      {!startDateFilter 
+                        ? `All Dates (${eligibleFlights.length} flights)` 
+                        : !endDateFilter 
+                          ? `${startDateFilter} (${filteredFlights.length} flights)` 
+                          : `${startDateFilter} → ${endDateFilter} (${filteredFlights.length} flights)`}
+                    </span>
+                    <ChevronDown size={13} color="#94A3B8" style={{ transform: isCalendarOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  </motion.button>
+
+                  {/* Quick Preset Buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      onClick={setAllDatesFilter}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '14px',
+                        border: !startDateFilter ? '1px solid rgba(14, 165, 233, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        backgroundColor: !startDateFilter ? 'rgba(14, 165, 233, 0.18)' : 'rgba(15, 23, 42, 0.5)',
+                        color: !startDateFilter ? '#38BDF8' : '#94A3B8',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={setTodayFilter}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '14px',
+                        border: startDateFilter === new Date().toISOString().split('T')[0] && !endDateFilter ? '1px solid rgba(14, 165, 233, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        backgroundColor: startDateFilter === new Date().toISOString().split('T')[0] && !endDateFilter ? 'rgba(14, 165, 233, 0.18)' : 'rgba(15, 23, 42, 0.5)',
+                        color: startDateFilter === new Date().toISOString().split('T')[0] && !endDateFilter ? '#38BDF8' : '#94A3B8',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Today
+                    </button>
+                    <button
+                      onClick={setLast7DaysFilter}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '14px',
+                        border: startDateFilter && endDateFilter ? '1px solid rgba(14, 165, 233, 0.6)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        backgroundColor: startDateFilter && endDateFilter ? 'rgba(14, 165, 233, 0.18)' : 'rgba(15, 23, 42, 0.5)',
+                        color: startDateFilter && endDateFilter ? '#38BDF8' : '#94A3B8',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Last 7 Days
+                    </button>
+
+                    {startDateFilter && (
+                      <button
+                        onClick={setAllDatesFilter}
+                        title="Clear date filter"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 10px',
+                          borderRadius: '14px',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                          color: '#F87171',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <X size={12} /> Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Animated Interactive Month Calendar Dropdown / Popover */}
+                <AnimatePresence>
+                  {isCalendarOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                      transition={{ duration: 0.2 }}
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        marginTop: '8px',
+                        zIndex: 40,
+                        width: '320px',
+                        backgroundColor: '#0F172A',
+                        border: '1px solid rgba(56, 189, 248, 0.3)',
+                        borderRadius: '20px',
+                        padding: '16px',
+                        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(14, 165, 233, 0.15)',
+                        backdropFilter: 'blur(16px)'
+                      }}
+                    >
+                      {/* Month Header with Prev/Next Controls */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                        <button
+                          onClick={() => {
+                            if (calMonth === 0) {
+                              setCalMonth(11);
+                              setCalYear(calYear - 1);
+                            } else {
+                              setCalMonth(calMonth - 1);
+                            }
+                          }}
+                          style={{ background: 'rgba(255, 255, 255, 0.08)', border: 'none', borderRadius: '8px', padding: '6px', color: '#CBD5E1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+
+                        <div style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF' }}>
+                          {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][calMonth]} {calYear}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            if (calMonth === 11) {
+                              setCalMonth(0);
+                              setCalYear(calYear + 1);
+                            } else {
+                              setCalMonth(calMonth + 1);
+                            }
+                          }}
+                          style={{ background: 'rgba(255, 255, 255, 0.08)', border: 'none', borderRadius: '8px', padding: '6px', color: '#CBD5E1', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+
+                      {/* Day of Week Headers */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '6px' }}>
+                        {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+                          <span key={d} style={{ fontSize: '10px', fontWeight: '800', color: '#64748B' }}>{d}</span>
+                        ))}
+                      </div>
+
+                      {/* Days Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                        {(() => {
+                          const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                          const firstDayIndex = (new Date(calYear, calMonth, 1).getDay() + 6) % 7; // Monday = 0
+                          const cells = [];
+
+                          // Empty padding cells before 1st day
+                          for (let i = 0; i < firstDayIndex; i++) {
+                            cells.push(<div key={`empty-${i}`} style={{ height: '34px' }} />);
+                          }
+
+                          // Actual days
+                          for (let d = 1; d <= daysInMonth; d++) {
+                            const dayPadded = String(d).padStart(2, '0');
+                            const monthPadded = String(calMonth + 1).padStart(2, '0');
+                            const dateStr = `${calYear}-${monthPadded}-${dayPadded}`;
+                            const count = flightCountByDate[dateStr] || 0;
+                            const hasData = count > 0;
+
+                            const isStart = startDateFilter === dateStr;
+                            const isEnd = endDateFilter === dateStr;
+                            const isInRange = startDateFilter && endDateFilter && (
+                              (startDateFilter <= endDateFilter && dateStr >= startDateFilter && dateStr <= endDateFilter) ||
+                              (startDateFilter > endDateFilter && dateStr >= endDateFilter && dateStr <= startDateFilter)
+                            );
+
+                            const isSelected = isStart || isEnd || (!endDateFilter && isStart);
+
+                            cells.push(
+                              <motion.button
+                                key={dateStr}
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleCalendarDayClick(dateStr)}
+                                title={hasData ? `${dateStr}: ${count} eligible flights` : dateStr}
+                                style={{
+                                  position: 'relative',
+                                  height: '34px',
+                                  borderRadius: '10px',
+                                  border: isSelected 
+                                    ? '1px solid #38BDF8' 
+                                    : hasData 
+                                      ? '1px solid rgba(14, 165, 233, 0.3)' 
+                                      : '1px solid transparent',
+                                  backgroundColor: isSelected 
+                                    ? '#0EA5E9' 
+                                    : isInRange 
+                                      ? 'rgba(14, 165, 233, 0.2)' 
+                                      : hasData 
+                                        ? 'rgba(15, 23, 42, 0.9)' 
+                                        : 'transparent',
+                                  color: isSelected ? '#FFFFFF' : hasData ? '#F1F5F9' : '#475569',
+                                  fontSize: '11px',
+                                  fontWeight: hasData ? '800' : '500',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxShadow: isSelected ? '0 0 12px rgba(14, 165, 233, 0.5)' : 'none',
+                                  transition: 'background-color 0.15s'
+                                }}
+                              >
+                                <span>{d}</span>
+                                {hasData && (
+                                  <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: isSelected ? '#FFFFFF' : '#38BDF8', marginTop: '1px' }} />
+                                )}
+                              </motion.button>
+                            );
+                          }
+                          return cells;
+                        })()}
+                      </div>
+
+                      {/* Footer Info & Reset */}
+                      <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '10px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#38BDF8', display: 'inline-block' }} />
+                          <span>Has radar data ({availableDates.length} days)</span>
+                        </div>
+                        <button
+                          onClick={() => setIsCalendarOpen(false)}
+                          style={{ padding: '4px 10px', borderRadius: '8px', background: 'rgba(14, 165, 233, 0.2)', border: '1px solid rgba(14, 165, 233, 0.4)', color: '#38BDF8', fontSize: '10px', fontWeight: '800', cursor: 'pointer' }}
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
 
