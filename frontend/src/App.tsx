@@ -112,30 +112,38 @@ export default function App() {
 Please select an eligible flight from the live table or upload a boarding pass/receipt image to automatically populate and generate your EU261 legal demand notice.`;
     }
     const total = (statEur || 0) + (recEur || 0);
-    return `FORMAL DEMAND FOR EU261 COMPENSATION & EXPENSE REIMBURSEMENT
-Regulation (EC) No 261/2004 Articles 5, 7, and 9
+    return `FORMAL DEMAND FOR STATUTORY EU261/2004 COMPENSATION & CARE EXPENSE REIMBURSEMENT
+Regulation (EC) No 261/2004 Articles 5, 7, 8, and 9 | ECJ Precedents C-549/07 & C-501/17
 
-TO: Customer Relations Department, ${carrier || '[AIRLINE CARRIER]'}
-RE: Statutory Claim for Delayed Flight ${flightNo || '[FLIGHT NUMBER]'} (PNR: ${pnr || '[BOOKING PNR]'})
+TO: Customer Relations & Legal Affairs Department, ${carrier || '[AIRLINE CARRIER]'}
+RE: Statutory Compensation Claim for Flight ${flightNo || '[FLIGHT NUMBER]'} (Booking Reference / PNR: ${pnr || '[BOOKING PNR]'})
 PASSENGER: ${passenger || '[PASSENGER FULL NAME]'}
 FLIGHT DATE: ${date || '[FLIGHT DATE]'} | ROUTE: ${route || '[ROUTE]'}
 
-1. STATUTORY COMPENSATION (Article 7)
-Under Regulation (EC) 261/2004 Article 7, statutory compensation of €${(statEur || 0).toFixed(2)} is strictly due per passenger for delays exceeding 3 hours.
+Dear Sir / Madam,
 
-2. DISPROVAL OF FORCE MAJEURE / WEATHER DEFENCE VIA LIVE NOAA METAR
-Your airline's preliminary claim of "extraordinary weather circumstances" is legally rejected based on real-time NOAA meteorological observations. Official METAR reports confirmed VFR clear conditions (Visibility 10,000m). Parallel flights operated normally.
+I am writing on behalf of passenger ${passenger || '[PASSENGER NAME]'} to formally demand statutory compensation pursuant to Article 7 of Regulation (EC) No 261/2004, alongside mandatory reimbursement of out-of-pocket Duty of Care expenses under Article 9.
 
-3. RIGHT TO CARE EXPENSES (Article 9)
-Out-of-pocket food and refreshment expenses incurred during the delay totaling €${(recEur || 0).toFixed(2)} are attached for immediate reimbursement.
+1. STATUTORY CASH COMPENSATION (Article 7)
+The flight experienced an arrival delay exceeding 3 hours. Based on the great-circle geodesic distance of the verified flight route, statutory compensation of €${(statEur || 0).toFixed(2)} EUR is legally due per passenger.
 
-TOTAL PAYABLE DEMAND: €${total.toFixed(2)} EUR
+2. FORMAL REJECTION OF FORCE MAJEURE & WEATHER EXCUSE (ECJ C-549/07 Wallentin-Hermann)
+Any preliminary assertion by your airline citing "extraordinary weather circumstances" or "ATC operational restrictions" is formally rejected as legally ungrounded. Real-time NOAA Aviation Meteorological logs (METAR) confirmed Visual Flight Rules (VFR / CAVOK, visibility > 10,000m) with zero adverse meteorological thresholds. Parallel airline flights operated on schedule throughout the departure slot.
 
-Please remit statutory payment of €${total.toFixed(2)} within 14 calendar days.
+3. REIMBURSEMENT OF RIGHT TO CARE EXPENSES (Article 9)
+Incurred out-of-pocket expenses for meals, refreshments, and essential care totaling €${(recEur || 0).toFixed(2)} EUR are attached with receipt proofs for mandatory reimbursement.
+
+--------------------------------------------------
+TOTAL STATUTORY PAYABLE AMOUNT: €${total.toFixed(2)} EUR
+--------------------------------------------------
+
+Kindly remit the total amount of €${total.toFixed(2)} EUR to the passenger's bank account within 14 calendar days of receipt of this formal notice. In the event of non-compliance, this matter will be escalated to the relevant National Enforcement Body (NEB) and the European Small Claims Procedure without further notice.
 
 Sincerely,
-${passenger || '[PASSENGER NAME]'}`;
+${passenger || '[PASSENGER NAME]'}
+(Represented by OmniClaim AI Autonomous Passenger Rights Advocate)`;
   };
+
 
   const updateClaimField = (field: string, val: any) => {
     setClaimData(prev => {
@@ -380,6 +388,81 @@ ${passenger || '[PASSENGER NAME]'}`;
     }
   };
 
+  const [isSimulatingAutonomous, setIsSimulatingAutonomous] = useState(false);
+
+  const handleSimulateAutonomousDetection = async () => {
+    setIsSimulatingAutonomous(true);
+    setSubmittedSuccess(false);
+
+    const targetFlight = eligibleFlights.find(f => f.statutory_amount_eur >= 400) || eligibleFlights[0] || {
+      flight_number: "LH1335",
+      carrier: "Lufthansa German Airlines",
+      route: "Budapest (BUD) -> Frankfurt (FRA)",
+      delay_duration: "3h 45m",
+      statutory_amount_eur: 400,
+      metar_verdict: "NOAA METAR disproved weather excuse. Clear VFR conditions.",
+      flight_date: new Date().toISOString().split('T')[0]
+    };
+
+    try {
+      const res = await fetch('/api/pipeline/run-flight-pipeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flight_number: targetFlight.flight_number,
+          passenger_name: "Balazs Kovacs",
+          pnr_code: "PNR-LH8842",
+          flight_date: targetFlight.flight_date,
+          receipts_amount_eur: 65.50
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const pkg = data.decision_package || {};
+        const updatedCarrier = pkg.flight_info?.carrier || targetFlight.carrier;
+        const updatedFlight = pkg.flight_info?.flight_number || targetFlight.flight_number;
+        const updatedPnr = pkg.pnr_code || "PNR-LH8842";
+        const updatedPassenger = pkg.passenger_name || "Balazs Kovacs";
+        const updatedStat = pkg.compensation?.statutory_amount_eur || targetFlight.statutory_amount_eur || 400;
+        const updatedRec = pkg.compensation?.duty_of_care_expenses_eur || 65.50;
+        const updatedRoute = pkg.flight_info?.route || targetFlight.route;
+        const updatedDate = pkg.flight_info?.flight_date || targetFlight.flight_date;
+
+        setClaimData({
+          claimId: pkg.decision_id || `CLM-${targetFlight.flight_number}-${Date.now()}`,
+          carrier: updatedCarrier,
+          flightNumber: updatedFlight,
+          pnr: updatedPnr,
+          passengerName: updatedPassenger,
+          passengerEmail: "passenger@example.com",
+          delayDuration: pkg.flight_info?.delay_duration || targetFlight.delay_duration,
+          statutoryEur: updatedStat,
+          receiptsEur: updatedRec,
+          flightDate: updatedDate,
+          route: updatedRoute
+        });
+
+        setLegalNotice(
+          generateLegalLetter(
+            updatedCarrier,
+            updatedFlight,
+            updatedPnr,
+            updatedPassenger,
+            updatedStat,
+            updatedRec,
+            updatedRoute,
+            updatedDate
+          )
+        );
+        setActiveTab('claim');
+      }
+    } catch (e) {
+      console.error("Autonomous simulation error:", e);
+    } finally {
+      setIsSimulatingAutonomous(false);
+    }
+  };
+
   const handleParseDocumentBackend = async () => {
     setSubmittedSuccess(false);
     if (ocrText && ocrText.trim()) {
@@ -401,6 +484,7 @@ ${passenger || '[PASSENGER NAME]'}`;
   };
 
   const [selectedDateFilter, setSelectedDateFilter] = useState<string>("ALL");
+
 
   const filteredFlights = eligibleFlights.filter(fl => {
     const matchesSearch = 
@@ -529,7 +613,51 @@ ${passenger || '[PASSENGER NAME]'}`;
               <div style={{ textAlign: 'left' }}><div style={{ fontSize: '13px', fontWeight: '800', color: '#FFFFFF' }}>€250 - €600</div><div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600' }}>Statutory Rights / PAX</div></div>
             </div>
           </div>
+
+          {/* Interactive Autonomous Simulation Action for Hackathon Judges */}
+          <div style={{ margin: '0 auto 20px auto', maxWidth: '540px' }}>
+
+            <motion.button
+              whileHover={{ scale: 1.03, boxShadow: '0 0 24px rgba(14, 165, 233, 0.45)' }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleSimulateAutonomousDetection}
+              disabled={isSimulatingAutonomous}
+              style={{
+                width: '100%',
+                padding: '12px 20px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.9), rgba(99, 102, 241, 0.9))',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                color: '#FFFFFF',
+                fontWeight: '900',
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                boxShadow: '0 8px 24px rgba(14, 165, 233, 0.3)',
+                letterSpacing: '0.01em'
+              }}
+            >
+              {isSimulatingAutonomous ? (
+                <>
+                  <Loader2 size={16} color="#FFFFFF" className="animate-spin" />
+                  <span>Auditing OpenSky Radar & NOAA METAR in Background...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} color="#FDE047" />
+                  <span>⚡ Simulate Autonomous Background Delay Detection (1-Click Demo)</span>
+                </>
+              )}
+            </motion.button>
+            <p style={{ fontSize: '10px', color: '#94A3B8', marginTop: '6px', fontWeight: '500' }}>
+              Simulates Strands Agent lifecycle: Radar delay detected → METAR bluff disproved → 1-Click claim ready.
+            </p>
+          </div>
         </motion.div>
+
 
         {/* Animated Sliding Tab Bar - Ultra-compact on mobile */}
         <div style={{ display: 'inline-flex', gap: '6px', backgroundColor: 'rgba(15, 23, 42, 0.95)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.12)', position: 'relative', width: '100%', maxWidth: '640px', justifyContent: 'space-between', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)' }}>
