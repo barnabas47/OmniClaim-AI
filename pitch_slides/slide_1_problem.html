@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  body {
+    width: 1920px; height: 1080px;
+    background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 50%, #020617 100%);
+    color: #f8fafc;
+    padding: 80px 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .header { display: flex; flex-direction: column; gap: 12px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #818cf8; font-size: 18px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; padding: 8px 18px; border-radius: 9999px; width: fit-content;
+  }
+  .title { font-size: 54px; font-weight: 800; color: #ffffff; letter-spacing: -1px; }
+  .title span { background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { font-size: 24px; color: #94a3b8; font-weight: 400; max-width: 1200px; }
+  
+  .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 20px; }
+  .card {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px; padding: 36px;
+    backdrop-filter: blur(16px);
+    display: flex; flex-direction: column; gap: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .card-icon {
+    width: 60px; height: 60px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .icon-red { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; }
+  .icon-amber { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; }
+  .icon-blue { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; }
+  
+  .card-stat { font-size: 38px; font-weight: 800; color: #ffffff; }
+  .card-title { font-size: 22px; font-weight: 700; color: #e2e8f0; }
+  .card-desc { font-size: 17px; line-height: 1.6; color: #94a3b8; }
+
+  .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 24px; font-size: 18px; color: #64748b;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: #e2e8f0; font-size: 20px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="badge">Problem Statement // Everyday Agents</div>
+    <h1 class="title">The <span>$3.8 Billion</span> Flight Compensation Dilemma</h1>
+    <p class="subtitle">Airlines systematically exploit information asymmetry to avoid paying statutory compensation owed to travelers under Regulation (EC) 261/2004.</p>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon icon-red">💸</div>
+      <div class="card-stat">$3.8 Billion</div>
+      <div class="card-title">Unclaimed Annual Rights</div>
+      <p class="card-desc">Passengers are legally entitled to <strong>€250 to €600</strong> per delayed flight. Over <strong>85%</strong> never receive compensation due to bureaucratic friction and hidden claim portals.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-icon icon-amber">⛈️</div>
+      <div class="card-stat">The Weather Trap</div>
+      <div class="card-title">Unverifiable Airline Excuses</div>
+      <p class="card-desc">Airlines routinely reject valid claims citing <em>"extraordinary weather conditions"</em> or <em>"ATC restrictions"</em>, knowing ordinary travelers have zero tools to audit aviation meteorological logs.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-icon icon-blue">⚖️</div>
+      <div class="card-stat">Asymmetry</div>
+      <div class="card-title">Legal & Technical Gap</div>
+      <p class="card-desc">Everyday humans cannot decode NOAA/METAR isobar charts or cite relevant European Court of Justice rulings (e.g. <em>C-549/07</em> Wallentin-Hermann), leaving them powerless.</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="brand">✈️ OmniClaim AI — Autonomous Flight Rights Guardian</div>
+    <div>AWS Agents for Humans Hackathon 2026</div>
+  </div>
+</body>
+</html>
