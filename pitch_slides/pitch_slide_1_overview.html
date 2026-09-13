@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  body {
+    width: 1920px; height: 1080px;
+    background: #070d1e radial-gradient(circle at 50% 0%, #0d2347 0%, #070d1e 70%);
+    color: #f8fafc;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  
+  /* Top Bar */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+    padding-bottom: 24px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;
+  }
+  .brand-badge {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    color: #ffffff; padding: 6px 14px; border-radius: 8px; font-size: 14px; font-weight: 700;
+  }
+  .nav-pills {
+    display: flex; gap: 12px;
+  }
+  .pill {
+    background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.3);
+    color: #38bdf8; font-size: 15px; font-weight: 600; padding: 8px 20px; border-radius: 9999px;
+  }
+  .pill-active {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #ffffff; border-color: transparent;
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+  }
+
+  /* Header */
+  .main-header { text-align: center; margin: 15px 0; }
+  .main-title { font-size: 46px; font-weight: 800; color: #ffffff; letter-spacing: -1px; margin-bottom: 8px; }
+  .main-title span { color: #38bdf8; }
+  .main-desc { font-size: 20px; color: #94a3b8; max-width: 1100px; margin: 0 auto; }
+
+  /* 3 Main Pitch Cards */
+  .cards-container {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+  }
+  .pitch-card {
+    background: rgba(11, 23, 48, 0.85);
+    border: 1px solid rgba(14, 165, 233, 0.25);
+    border-radius: 20px; padding: 32px 28px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
+  }
+  
+  .card-top { display: flex; justify-content: space-between; align-items: center; }
+  .card-tag {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+    color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 5px 12px; border-radius: 6px;
+  }
+  .card-badge-green {
+    background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399; font-size: 14px; font-weight: 700; padding: 4px 12px; border-radius: 9999px;
+  }
+  .card-badge-amber {
+    background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fbbf24; font-size: 14px; font-weight: 700; padding: 4px 12px; border-radius: 9999px;
+  }
+
+  .card-heading { font-size: 24px; font-weight: 800; color: #ffffff; line-height: 1.2; }
+  .card-body { font-size: 16px; line-height: 1.6; color: #94a3b8; }
+  .card-body strong { color: #f1f5f9; }
+
+  /* Inset Info Box (matches METAR UI) */
+  .terminal-box {
+    background: rgba(4, 9, 22, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 12px; padding: 14px 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px; color: #7dd3fc; line-height: 1.5;
+  }
+  .terminal-label { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+
+  /* Bottom CTA Button style */
+  .card-btn {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    border: none; border-radius: 12px; padding: 14px;
+    color: #ffffff; font-size: 16px; font-weight: 700; text-align: center;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 18px; font-size: 16px; color: #64748b;
+  }
+</style>
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <div class="topbar">
+    <div class="brand">
+      <span>✈️ OmniClaim AI</span>
+      <span class="brand-badge">2.0 AWS Production</span>
+    </div>
+    <div class="nav-pills">
+      <div class="pill pill-active">1. The Problem</div>
+      <div class="pill">2. Who It's For</div>
+      <div class="pill">3. Why It Matters</div>
+      <div class="pill">Everyday Agents Track</div>
+    </div>
+  </div>
+
+  <!-- Main Pitch Header -->
+  <div class="main-header">
+    <h1 class="main-title">Autonomous Flight Compensation & <span>Weather Disprover</span></h1>
+    <p class="main-desc">A set-and-forget quiet guardian that eliminates airline excuses with empirical meteorological ground truth.</p>
+  </div>
+
+  <!-- 3 Pitch Cards matching Live Dashboard -->
+  <div class="cards-container">
+    
+    <!-- Card 1: Problem -->
+    <div class="pitch-card">
+      <div class="card-top">
+        <span class="card-tag">01 // Problem</span>
+        <span class="card-badge-amber">85% Unclaimed</span>
+      </div>
+      <h2 class="card-heading">The $3.8 Billion "Weather Trap"</h2>
+      <p class="card-body">
+        Under EU261 & UK261, airlines owe up to <strong>€600 per passenger</strong> for delays. Airlines systematically reject valid claims by falsely blaming <em>"extraordinary weather"</em> — knowing everyday passengers cannot verify aviation logs.
+      </p>
+      <div class="terminal-box">
+        <div class="terminal-label">Airlines Exploit Data Asymmetry</div>
+        "Claim rejected: Force Majeure weather restrictions." &rarr; 85% of travelers give up without payout.
+      </div>
+      <div class="card-btn">❌ Disproving False Excuses</div>
+    </div>
+
+    <!-- Card 2: Who It's For -->
+    <div class="pitch-card">
+      <div class="card-top">
+        <span class="card-tag">02 // Who It's For</span>
+        <span class="card-badge-green">Everyday Humans</span>
+      </div>
+      <h2 class="card-heading">Set-and-Forget Quiet Guardian</h2>
+      <p class="card-body">
+        Built for <strong>ordinary passengers, families, and busy commuters</strong>. Zero legal jargon or tedious claim portals. Drop a ticket once or let the agent silently audit flights in the background.
+      </p>
+      <div class="terminal-box">
+        <div class="terminal-label">Zero-Effort Experience</div>
+        No 10-page forms • Client-side OCR privacy • Surfacing ONLY when verified cash is ready.
+      </div>
+      <div class="card-btn">🛡️ 100% Autonomous Protection</div>
+    </div>
+
+    <!-- Card 3: Why It Matters -->
+    <div class="pitch-card">
+      <div class="card-top">
+        <span class="card-tag">03 // Why It Matters</span>
+        <span class="card-badge-green">€250 – €600 Cash</span>
+      </div>
+      <h2 class="card-heading">Empirical Truth & 1-Click Payouts</h2>
+      <p class="card-body">
+        Cross-references <strong>hourly NOAA METAR weather logs</strong> and binding <strong>ECJ Court Precedents (C-549/07)</strong>. Generates court-ready PDF dispute letters with airtight proof in <strong>&lt;5 seconds</strong>.
+      </p>
+      <div class="terminal-box">
+        <div class="terminal-label">EMPIRICAL NOAA METAR AUDIT</div>
+        METAR EGKK 111420Z 30008KT 9999 SCT049 21/12 Q1021 [VFR Clear — Weather Excuse Disproven]
+      </div>
+      <div class="card-btn">✨ 1-Click File Claim (€400) &rarr;</div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div>Live Deployment: <strong>omniclaim-ai.onrender.com</strong></div>
+    <div>AWS Agents for Humans Hackathon 2026 // Everyday Agents Track</div>
+  </div>
+</body>
+</html>

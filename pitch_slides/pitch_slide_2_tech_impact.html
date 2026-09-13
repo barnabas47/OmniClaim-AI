@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  body {
+    width: 1920px; height: 1080px;
+    background: #070d1e radial-gradient(circle at 50% 0%, #0d2347 0%, #070d1e 70%);
+    color: #f8fafc;
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  
+  /* Top Bar */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+    padding-bottom: 24px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;
+  }
+  .brand-badge {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    color: #ffffff; padding: 6px 14px; border-radius: 8px; font-size: 14px; font-weight: 700;
+  }
+  .nav-pills { display: flex; gap: 12px; }
+  .pill {
+    background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.3);
+    color: #38bdf8; font-size: 15px; font-weight: 600; padding: 8px 20px; border-radius: 9999px;
+  }
+  .pill-active {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #ffffff; border-color: transparent;
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+  }
+
+  /* Header */
+  .main-header { text-align: center; margin: 15px 0; }
+  .main-title { font-size: 46px; font-weight: 800; color: #ffffff; letter-spacing: -1px; margin-bottom: 8px; }
+  .main-title span { color: #38bdf8; }
+  .main-desc { font-size: 20px; color: #94a3b8; max-width: 1100px; margin: 0 auto; }
+
+  /* 4 Tech Cards */
+  .cards-container {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+  }
+  .tech-card {
+    background: rgba(11, 23, 48, 0.85);
+    border: 1px solid rgba(14, 165, 233, 0.25);
+    border-radius: 20px; padding: 28px 24px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    display: flex; flex-direction: column; justify-content: space-between; gap: 14px;
+  }
+  
+  .card-top { display: flex; justify-content: space-between; align-items: center; }
+  .agent-badge {
+    font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+    color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 5px 10px; border-radius: 6px;
+  }
+  .card-badge-green {
+    background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #34d399; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 9999px;
+  }
+  .icon-box {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.3);
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+  }
+
+  .card-heading { font-size: 21px; font-weight: 800; color: #ffffff; line-height: 1.2; }
+  .card-body { font-size: 15px; line-height: 1.55; color: #94a3b8; }
+  .card-body strong { color: #f1f5f9; }
+
+  .terminal-box {
+    background: rgba(4, 9, 22, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 10px; padding: 10px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px; color: #7dd3fc; line-height: 1.4;
+  }
+
+  .card-btn {
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    border: none; border-radius: 10px; padding: 12px;
+    color: #ffffff; font-size: 14px; font-weight: 700; text-align: center;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  }
+
+  /* Footer */
+  .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 18px; font-size: 16px; color: #64748b;
+  }
+</style>
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">
+      <span>✈️ OmniClaim AI Architecture</span>
+      <span class="brand-badge">AWS Bedrock + Strands Multi-Agent</span>
+    </div>
+    <div class="nav-pills">
+      <div class="pill">Flight Auditor</div>
+      <div class="pill">Weather Disprover</div>
+      <div class="pill">Legal Strategist</div>
+      <div class="pill pill-active">Zero-Server Privacy</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="main-header">
+    <h1 class="main-title">Multi-Agent Intelligence & <span>Lightweight Privacy</span></h1>
+    <p class="main-desc">Autonomous micro-agents collaborating to turn raw flight telemetry into legally binding compensation claims.</p>
+  </div>
+
+  <!-- 4 Tech Grid Cards -->
+  <div class="cards-container">
+    
+    <!-- Agent 1 -->
+    <div class="tech-card">
+      <div class="card-top">
+        <span class="agent-badge">Agent 01</span>
+        <div class="icon-box">✈️</div>
+      </div>
+      <h2 class="card-heading">Flight Auditor</h2>
+      <p class="card-body">
+        Calculates exact geodesic great-circle distances. Audits scheduled vs. actual arrival times to trigger <strong>EU261 / UK261</strong> thresholds.
+      </p>
+      <div class="terminal-box">
+        Route: MXP &rarr; LGW (920 km)<br>
+        Delay: 4h 50m (&ge;3h Threshold)<br>
+        Statutory Claim: €400
+      </div>
+      <div class="card-btn">Route Validated ✓</div>
+    </div>
+
+    <!-- Agent 2 -->
+    <div class="tech-card">
+      <div class="card-top">
+        <span class="agent-badge">Agent 02</span>
+        <div class="icon-box">⛈️</div>
+      </div>
+      <h2 class="card-heading">Weather Disprover</h2>
+      <p class="card-body">
+        Fetches live airport <strong>METAR & TAF</strong> weather logs. Verifies wind speed, visibility, and IFR/VFR status to shatter false weather defenses.
+      </p>
+      <div class="terminal-box">
+        Wind: 08 kts (Max limit: 35 kts)<br>
+        Visibility: 10km (Clear)<br>
+        Verdict: Weather Normal
+      </div>
+      <div class="card-btn">Force Majeure Disproven ✓</div>
+    </div>
+
+    <!-- Agent 3 -->
+    <div class="tech-card">
+      <div class="card-top">
+        <span class="agent-badge">Agent 03</span>
+        <div class="icon-box">⚖️</div>
+      </div>
+      <h2 class="card-heading">Legal Strategist</h2>
+      <p class="card-body">
+        Synthesizes ECJ case law precedents (<strong>C-549/07 & C-501/17</strong>). Automatically drafts a tailored PDF legal dispute letter.
+      </p>
+      <div class="terminal-box">
+        Cites: Wallentin-Hermann<br>
+        Legal Notice: 14-Day Deadline<br>
+        Format: Court-Ready PDF
+      </div>
+      <div class="card-btn">Legal Packet Ready ✓</div>
+    </div>
+
+    <!-- Tech Specs -->
+    <div class="tech-card">
+      <div class="card-top">
+        <span class="agent-badge">Privacy</span>
+        <span class="card-badge-green">&lt;38 MB RAM</span>
+      </div>
+      <h2 class="card-heading">In-Browser OCR</h2>
+      <p class="card-body">
+        Boarding passes are parsed client-side with <strong>WebAssembly OCR</strong>. Zero PNR / passport data ever touches external servers.
+      </p>
+      <div class="terminal-box">
+        Client OCR: 100% Private<br>
+        Backend: FastAPI on Render<br>
+        AWS: Bedrock + Strands SDK
+      </div>
+      <div class="card-btn">Live on Render 🚀</div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div>Live App: <strong>omniclaim-ai.onrender.com</strong></div>
+    <div>AWS Agents for Humans Hackathon 2026 // Category: Everyday Agents</div>
+  </div>
+</body>
+</html>
