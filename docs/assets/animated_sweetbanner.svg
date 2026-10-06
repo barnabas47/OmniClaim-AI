@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#030712" />
+      <stop offset="45%" stop-color="#0b1329" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <linearGradient id="cyanPurpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#9d4edd" />
+    </linearGradient>
+
+    <linearGradient id="radarBeamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.7" />
+      <stop offset="60%" stop-color="#0284c7" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#030712" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#0ea5e9" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0.3" />
+    </linearGradient>
+
+    <radialGradient id="nebulaGlow1" cx="25%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.25" />
+      <stop offset="60%" stop-color="#0369a1" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#030712" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="nebulaGlow2" cx="80%" cy="65%" r="55%">
+      <stop offset="0%" stop-color="#9d4edd" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#030712" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Filters -->
+    <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="intenseGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Styles and Animations -->
+    <style>
+      @keyframes pulseGlow {
+        0%, 100% { opacity: 0.35; transform: scale(1); }
+        50% { opacity: 0.75; transform: scale(1.08); }
+      }
+      @keyframes flightSweep {
+        0% { stroke-dashoffset: 800; opacity: 0; }
+        20% { opacity: 1; }
+        80% { opacity: 1; }
+        100% { stroke-dashoffset: 0; opacity: 0.2; }
+      }
+      @keyframes floatPlane {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-10px) rotate(1.5deg); }
+      }
+      @keyframes radarRotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes starTwinkle {
+        0%, 100% { opacity: 0.2; transform: scale(0.8); }
+        50% { opacity: 0.95; transform: scale(1.25); }
+      }
+      @keyframes badgePulse {
+        0%, 100% { stroke-opacity: 0.4; }
+        50% { stroke-opacity: 1; filter: drop-shadow(0 0 6px #00f2fe); }
+      }
+      @keyframes blinkCursor {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+
+      .nebula-1 { animation: pulseGlow 8s ease-in-out infinite alternate; transform-origin: 25% 30%; }
+      .nebula-2 { animation: pulseGlow 10s ease-in-out infinite alternate 2s; transform-origin: 80% 65%; }
+      .flight-path {
+        stroke-dasharray: 400 400;
+        animation: flightSweep 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+      .plane-float { animation: floatPlane 4s ease-in-out infinite; }
+      .radar-sweep { transform-origin: 1020px 210px; animation: radarRotate 6s linear infinite; }
+      .star-1 { animation: starTwinkle 3s ease-in-out infinite 0.3s; transform-origin: center; }
+      .star-2 { animation: starTwinkle 4s ease-in-out infinite 1.2s; transform-origin: center; }
+      .star-3 { animation: starTwinkle 2.5s ease-in-out infinite 2s; transform-origin: center; }
+      .badge-glow { animation: badgePulse 3s ease-in-out infinite; }
+      .cursor-blink { animation: blinkCursor 0.9s infinite; }
+    </style>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="420" fill="url(#bgGrad)" rx="16" />
+
+  <!-- Cyber Grid Pattern -->
+  <g stroke="#1e293b" stroke-width="0.7" opacity="0.35">
+    <line x1="0" y1="70" x2="1200" y2="70" />
+    <line x1="0" y1="140" x2="1200" y2="140" />
+    <line x1="0" y1="210" x2="1200" y2="210" />
+    <line x1="0" y1="280" x2="1200" y2="280" />
+    <line x1="0" y1="350" x2="1200" y2="350" />
+    <line x1="150" y1="0" x2="150" y2="420" />
+    <line x1="300" y1="0" x2="300" y2="420" />
+    <line x1="450" y1="0" x2="450" y2="420" />
+    <line x1="600" y1="0" x2="600" y2="420" />
+    <line x1="750" y1="0" x2="750" y2="420" />
+    <line x1="900" y1="0" x2="900" y2="420" />
+    <line x1="1050" y1="0" x2="1050" y2="420" />
+  </g>
+
+  <!-- Glowing Nebulae -->
+  <circle cx="280" cy="140" r="320" fill="url(#nebulaGlow1)" class="nebula-1" />
+  <circle cx="950" cy="260" r="300" fill="url(#nebulaGlow2)" class="nebula-2" />
+
+  <!-- Decorative Stars & Telemetry Crosshairs -->
+  <g fill="#38bdf8">
+    <circle cx="120" cy="90" r="2" class="star-1" />
+    <circle cx="340" cy="60" r="1.5" class="star-2" />
+    <circle cx="560" cy="110" r="2" class="star-3" />
+    <circle cx="780" cy="70" r="2.5" class="star-1" />
+    <circle cx="910" cy="130" r="1.5" class="star-2" />
+    <circle cx="1120" cy="80" r="2" class="star-3" />
+    <circle cx="210" cy="360" r="2" class="star-2" />
+    <circle cx="490" cy="380" r="1.5" class="star-1" />
+    <circle cx="710" cy="340" r="2" class="star-3" />
+  </g>
+
+  <!-- Great-Circle Flight Arcs -->
+  <g fill="none">
+    <path d="M 100 360 Q 550 40 1020 210" stroke="#0369a1" stroke-width="2.5" opacity="0.4" stroke-dasharray="6 6" />
+    <path d="M 100 360 Q 550 40 1020 210" stroke="url(#cyanPurpleGrad)" stroke-width="3.5" class="flight-path" filter="url(#glowFilter)" />
+    <path d="M 160 380 Q 600 120 1080 180" stroke="#9d4edd" stroke-width="1.5" opacity="0.3" stroke-dasharray="4 8" />
+  </g>
+
+  <!-- Right Visual: ADS-B Radar Guardian & Shield HUD -->
+  <g transform="translate(940, 90)">
+    <!-- Radar Rings -->
+    <circle cx="80" cy="120" r="110" fill="none" stroke="#0284c7" stroke-width="1" opacity="0.25" stroke-dasharray="4 4" />
+    <circle cx="80" cy="120" r="80" fill="none" stroke="#00f2fe" stroke-width="1.2" opacity="0.4" />
+    <circle cx="80" cy="120" r="50" fill="none" stroke="#38bdf8" stroke-width="1" opacity="0.5" />
+    <circle cx="80" cy="120" r="20" fill="none" stroke="#9d4edd" stroke-width="1.5" opacity="0.7" />
+
+    <!-- Radar Crosshairs -->
+    <line x1="80" y1="10" x2="80" y2="230" stroke="#0284c7" stroke-width="1" opacity="0.3" />
+    <line x1="-30" y1="120" x2="190" y2="120" stroke="#0284c7" stroke-width="1" opacity="0.3" />
+
+    <!-- Rotating Radar Sector -->
+    <g class="radar-sweep">
+      <path d="M 80 120 L 190 120 A 110 110 0 0 0 160 45 Z" fill="url(#radarBeamGrad)" />
+    </g>
+
+    <!-- Radar Blips -->
+    <circle cx="120" cy="85" r="4" fill="#00f2fe" filter="url(#glowFilter)" />
+    <circle cx="50" cy="150" r="3" fill="#10b981" />
+    <circle cx="135" cy="165" r="3.5" fill="#f59e0b" />
+
+    <!-- Central Guardian Jet Icon (Floating) -->
+    <g class="plane-float" transform="translate(62, 102)">
+      <!-- Outer Shield Aura -->
+      <polygon points="18,0 36,12 36,32 18,44 0,32 0,12" fill="url(#shieldGrad)" stroke="#00f2fe" stroke-width="1.5" opacity="0.6" filter="url(#glowFilter)" />
+      <!-- Jet Silhouette -->
+      <path d="M18,6 L22,17 L34,22 L34,26 L22,25 L21,35 L26,38 L26,41 L18,40 L10,41 L10,38 L15,35 L14,25 L2,26 L2,22 L14,17 Z" fill="#ffffff" filter="url(#glowFilter)" />
+    </g>
+
+    <!-- Floating HUD Badges -->
+    <g transform="translate(-10, 195)">
+      <rect width="180" height="34" rx="8" fill="#030712" fill-opacity="0.85" stroke="#10b981" stroke-width="1.2" />
+      <circle cx="18" cy="17" r="5" fill="#10b981" filter="url(#glowFilter)" />
+      <text x="32" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#34d399" letter-spacing="0.5">METAR: CAVOK / VFR</text>
+    </g>
+
+    <g transform="translate(-25, 20)">
+      <rect width="190" height="34" rx="8" fill="#030712" fill-opacity="0.85" stroke="#00f2fe" stroke-width="1.2" />
+      <text x="14" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="800" fill="#38bdf8" letter-spacing="0.8">DISPROVED: €600 CLAIM</text>
+    </g>
+  </g>
+
+  <!-- Left Content: Hero Typography & Status Badges -->
+  <g transform="translate(70, 75)">
+    <!-- Top Pill Badge -->
+    <g class="badge-glow">
+      <rect width="395" height="32" rx="16" fill="#0b1730" fill-opacity="0.85" stroke="#00f2fe" stroke-width="1.2" />
+      <circle cx="18" cy="16" r="4.5" fill="#00f2fe" filter="url(#glowFilter)" />
+      <text x="34" y="21" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" font-weight="700" fill="#7dd3fc" letter-spacing="1.2">
+        AWS AGENTS FOR HUMANS HACKATHON WINNER
+      </text>
+    </g>
+
+    <!-- Main Title -->
+    <text x="0" y="105" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Montserrat, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="-1">
+      OmniClaim <tspan fill="url(#cyanPurpleGrad)" filter="url(#intenseGlow)">AI</tspan>
+    </text>
+
+    <!-- Subtitle / Value Prop -->
+    <text x="0" y="145" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="600" fill="#94a3b8" letter-spacing="0.2">
+      Autonomous Passenger Rights Guardian &amp; Weather Bluff Disprover
+    </text>
+
+    <text x="0" y="174" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14.5" font-weight="400" fill="#64748b">
+      Turning flight delays into statutory <tspan fill="#38bdf8" font-weight="700">€250–€600</tspan> cash payouts with zero user effort.
+    </text>
+
+    <!-- Tech Stack Mini Badges Bar -->
+    <g transform="translate(0, 210)">
+      <!-- Badge 1: Strands SDK -->
+      <g>
+        <rect width="150" height="30" rx="7" fill="#0f172a" stroke="#38bdf8" stroke-width="1" />
+        <text x="14" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#e0f2fe">
+          ⚡ Strands SDK 1.54
+        </text>
+      </g>
+
+      <!-- Badge 2: AWS Bedrock AgentCore -->
+      <g transform="translate(162, 0)">
+        <rect width="180" height="30" rx="7" fill="#0f172a" stroke="#6366f1" stroke-width="1" />
+        <text x="14" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#e0e7ff">
+          🧠 AWS Bedrock AgentCore
+        </text>
+      </g>
+
+      <!-- Badge 3: NOAA ADS-B Engine -->
+      <g transform="translate(354, 0)">
+        <rect width="170" height="30" rx="7" fill="#0f172a" stroke="#10b981" stroke-width="1" />
+        <text x="14" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" fill="#d1fae5">
+          🛰️ OpenSky + NOAA METAR
+        </text>
+      </g>
+
+      <!-- Badge 4: Production Live -->
+      <g transform="translate(536, 0)">
+        <rect width="140" height="30" rx="7" fill="#064e3b" stroke="#34d399" stroke-width="1.2" />
+        <circle cx="16" cy="15" r="4" fill="#34d399" filter="url(#glowFilter)" />
+        <text x="28" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="800" fill="#ecfdf5">
+          24/7 LIVE CLOUD
+        </text>
+      </g>
+    </g>
+
+    <!-- Terminal Readout Line -->
+    <g transform="translate(0, 265)">
+      <rect width="676" height="38" rx="8" fill="#020617" stroke="#1e293b" stroke-width="1" />
+      <circle cx="18" cy="19" r="4.5" fill="#ef4444" opacity="0.8" />
+      <circle cx="34" cy="19" r="4.5" fill="#f59e0b" opacity="0.8" />
+      <circle cx="50" cy="19" r="4.5" fill="#10b981" opacity="0.8" />
+      <text x="72" y="24" font-family="'JetBrains Mono', 'Fira Code', Menlo, monospace" font-size="12.5" fill="#94a3b8">
+        <tspan fill="#38bdf8">omniclaim-ai</tspan>:<tspan fill="#9d4edd">radar-daemon</tspan>$ monitoring ADS-B flight AF1680... <tspan fill="#34d399" font-weight="700">ECJ C-549/07 PRECEDENT ATTESTED</tspan><tspan fill="#00f2fe" class="cursor-blink"> ▋</tspan>
+      </text>
+    </g>
+  </g>
+
+  <!-- Border Accent Glow -->
+  <rect x="1" y="1" width="1198" height="418" rx="15" fill="none" stroke="url(#cyanPurpleGrad)" stroke-width="1.5" opacity="0.6" />
+</svg>
