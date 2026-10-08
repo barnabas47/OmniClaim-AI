@@ -10,6 +10,18 @@
 ### 🛡️ *Autonomous Everyday Passenger Rights Guardian & Weather Bluff Disprover*
 **Turning catastrophic flight delays into statutory €250–€600 cash payouts with empirical proof and zero user effort.**
 
+<br/>
+
+[![🌐 TRY LIVE PRODUCTION APP](https://img.shields.io/badge/%F0%9F%8C%90_LAUNCH_LIVE_APP-https%3A%2F%2Fomniclaim--ai.onrender.com-00f2fe?style=for-the-badge&labelColor=030712&color=0284c7)](https://omniclaim-ai.onrender.com)
+[![24/7 STATUS](https://img.shields.io/badge/%E2%97%8F_STATUS-ONLINE_24%2F7-10B981?style=for-the-badge&labelColor=030712)](https://omniclaim-ai.onrender.com)
+
+<p align="center">
+  👉 <b><a href="https://omniclaim-ai.onrender.com" style="font-size: 1.25em; color: #00f2fe;">🚀 https://omniclaim-ai.onrender.com 🚀</a></b><br/>
+  <i>Click above to test the live multi-agent radar guardian and disproved claim engine in your browser (no installation required).</i>
+</p>
+
+<br/>
+
 [![AWS Hackathon](https://img.shields.io/badge/AWS_Hackathon-Agents_for_Humans-FF9900?style=for-the-badge&logo=amazon-aws)](https://agentsforhumans.devpost.com)
 [![Live Demo](https://img.shields.io/badge/Live_Demo-omniclaim--ai.onrender.com-0EA5E9?style=for-the-badge&logo=render)](https://omniclaim-ai.onrender.com)
 [![Strands SDK](https://img.shields.io/badge/Strands_SDK-1.54.0-38BDF8?style=for-the-badge)](https://strandsagents.com)

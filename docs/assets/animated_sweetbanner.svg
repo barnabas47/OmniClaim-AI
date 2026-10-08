@@ -234,12 +234,12 @@
         </text>
       </g>
 
-      <!-- Badge 4: Production Live -->
+      <!-- Badge 4: Production Live URL Button -->
       <g transform="translate(536, 0)">
-        <rect width="140" height="30" rx="7" fill="#064e3b" stroke="#34d399" stroke-width="1.2" />
-        <circle cx="16" cy="15" r="4" fill="#34d399" filter="url(#glowFilter)" />
-        <text x="28" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="800" fill="#ecfdf5">
-          24/7 LIVE CLOUD
+        <rect width="210" height="30" rx="7" fill="#022c22" stroke="#00f2fe" stroke-width="1.4" filter="url(#glowFilter)" />
+        <circle cx="16" cy="15" r="4.5" fill="#34d399" class="badge-glow" />
+        <text x="28" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11.5" font-weight="900" fill="#38bdf8" letter-spacing="0.3">
+          🚀 omniclaim-ai.onrender.com
         </text>
       </g>
     </g>
